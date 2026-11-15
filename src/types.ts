@@ -2,7 +2,7 @@ export type PlanId = 'mensajes' | 'turnos' | 'completo' | 'personalizado';
 export type MedioPago = 'mercadopago' | 'transferencia';
 export type EstadoPago = 'al_dia' | 'pendiente' | 'impago';
 export type EstadoBot = 'activo' | 'pausado';
-export type CanalTipo = 'whatsapp' | 'instagram' | 'telegram';
+export type CanalTipo = 'whatsapp' | 'instagram' | 'tiktok';
 export type TicketEstado = 'nuevo' | 'en_gestion' | 'cotizado' | 'contratado' | 'descartado';
 
 export interface Plan {

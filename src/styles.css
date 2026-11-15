@@ -138,7 +138,7 @@ button:not(.secondary):not(.link):not(.chip):hover, .button:hover { background: 
 
 .bloque { padding: 4.5rem max(1.25rem, calc((100vw - 1140px) / 2)); }
 .bloque-alt { background: #f7f7fc; }
-.bloque-angosto { max-width: 780px; margin: 0 auto; }
+.bloque-angosto { max-width: 780px; margin: 0 auto; padding-left: 1.25rem; padding-right: 1.25rem; }
 .bloque-titulo { font-size: clamp(1.5rem, 3vw, 2.1rem); text-align: center; margin: 0 auto 2.5rem; max-width: 40rem; letter-spacing: -0.01em; }
 .grid-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1.25rem; }
 .feature { background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; }
@@ -175,8 +175,8 @@ button:not(.secondary):not(.link):not(.chip):hover, .button:hover { background: 
 .plan-sel { outline: 3px solid var(--acento); outline-offset: 2px; }
 
 .faq { border-bottom: 1px solid var(--border); padding: 1rem 0; }
-.faq summary { cursor: pointer; font-weight: 600; font-size: 1.02rem; list-style: none; display: flex; justify-content: space-between; gap: 1rem; }
-.faq summary::after { content: '+'; color: var(--primary); font-size: 1.3rem; line-height: 1; }
+.faq summary { cursor: pointer; font-weight: 600; font-size: 1.02rem; list-style: none; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+.faq summary::after { content: '+'; color: var(--primary); font-size: 1.3rem; line-height: 1; flex-shrink: 0; }
 .faq[open] summary::after { content: '−'; }
 .faq p { color: var(--muted); line-height: 1.55; margin: 0.75rem 0 0; }
 
@@ -199,6 +199,8 @@ button:not(.secondary):not(.link):not(.chip):hover, .button:hover { background: 
 .legal p, .legal li { line-height: 1.65; color: #343a4a; }
 .legal li { margin-bottom: 0.35rem; }
 .aviso-legal { background: #f7f7fc; border-left: 3px solid var(--primary); padding: 0.75rem 1rem; font-size: 0.9rem; }
+.banner-explorar, .aviso-explorar { background: #fff7e8; border: 1px solid #f0d7a2; border-radius: 8px; padding: 0.75rem 1rem; margin: 0 0 1rem; }
+.explorar fieldset { border: 0; margin: 0; padding: 0; min-inline-size: 0; }
 
 /* ---------- Registro y acceso ---------- */
 .registro { display: grid; grid-template-columns: 1.6fr 1fr; gap: 2rem; max-width: 1240px; margin: 0 auto; padding: 2.5rem 1.25rem; align-items: start; }

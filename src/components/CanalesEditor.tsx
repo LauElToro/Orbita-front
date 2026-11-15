@@ -3,7 +3,7 @@ import type { Canal, CanalTipo } from '../types';
 const TIPOS: { value: CanalTipo; label: string }[] = [
   { value: 'whatsapp', label: 'WhatsApp' },
   { value: 'instagram', label: 'Instagram' },
-  { value: 'telegram', label: 'Telegram' },
+  { value: 'tiktok', label: 'TikTok' },
 ];
 
 export const canalVacio = (): Canal => ({ tipo: 'whatsapp', endpointId: '', etiqueta: '' });
@@ -29,7 +29,7 @@ export function CanalesEditor({ value, max, onChange }: Props) {
           </select>
           <input
             aria-label={`endpointId canal ${i + 1}`}
-            placeholder="endpointId (phone_number_id, page_id o bot id)"
+            placeholder="endpointId (phone_number_id, Instagram id o TikTok id)"
             value={c.endpointId}
             onChange={(e) => set(i, { endpointId: e.target.value })}
             required

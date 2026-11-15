@@ -64,27 +64,6 @@ export function PaginaCliente() {
           </div>
         )}
 
-        {p.transferencia && (
-          <div className="pago">
-            <h3>Transferencia</h3>
-            <dl className="kv">
-              <dt>Alias</dt>
-              <dd>
-                <code>{p.transferencia.alias}</code>
-              </dd>
-              <dt>Importe</dt>
-              <dd>{pesos(p.transferencia.importe)}</dd>
-              <dt>Concepto</dt>
-              <dd>
-                <code>{p.transferencia.concepto}</code>
-              </dd>
-            </dl>
-            <p className="muted small">
-              Si para el día {p.diasGracia} desde el vencimiento no llegó la transferencia, el bot queda en pausa hasta que se registre
-              el pago.
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );

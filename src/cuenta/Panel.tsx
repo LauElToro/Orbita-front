@@ -1,11 +1,11 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useState, type FormEvent } from 'react';
+import { useState, type FormEvent, type ReactNode } from 'react';
 import { Link, Navigate, NavLink, Outlet, useNavigate, useOutletContext } from 'react-router-dom';
 import { api, sesionCliente } from '../api';
 import { Logo } from '../components/Sitio';
 import { Badge, ErrorMsg, Section, UsoBar } from '../components/ui';
 import { ESTADO_PAGO, MEDIO, fecha, pesos } from '../format';
-import type { Cuenta, MedioPago, Pago, Plan, PlanId, Turno, Uso } from '../types';
+import type { Cuenta, Pago, Plan, PlanId, Turno, Uso } from '../types';
 import { CanalesForm, GuiaManychat, ManychatForm, PagoBloque, PerfilForm, Simulador, TextosForm } from './formularios';
 import { Tutorial } from './Tutorial';
 import { useAccionCuenta, useCuenta } from './useCuenta';
@@ -52,6 +52,7 @@ function CuentaShell() {
   };
   const c = cuenta.data;
   const listo = Boolean(c?.onboarding.completado);
+  const explorar = Boolean(c && !c.onboarding.completado && !c.onboarding.requisitos.pago);
 
   return (
     <div className="app">
@@ -63,7 +64,7 @@ function CuentaShell() {
           <NavLink to="/cuenta" end>
             Inicio
           </NavLink>
-          {listo && (
+          {(listo || explorar) && (
             <>
               <NavLink to="/cuenta/ia">Mi IA</NavLink>
               <NavLink to="/cuenta/probar">Probar</NavLink>
@@ -82,6 +83,11 @@ function CuentaShell() {
       <main className="content">
         {cuenta.isLoading && <p className="muted">Cargando...</p>}
         <ErrorMsg error={cuenta.error} />
+        {explorar && (
+          <p className="banner-explorar">
+            Estás explorando el panel. La IA, la conexión y el simulador se habilitan cuando se acredita el pago con Mercado Pago.
+          </p>
+        )}
         {c && <Outlet context={c} />}
       </main>
       {c && c.legalPendiente.length > 0 && <ModalLegal cuenta={c} />}
@@ -97,12 +103,12 @@ export function Inicio() {
         <div className="narrow-center">
           <Section title={`¡Bienvenido a Orbita, ${cuenta.usuario?.nombre.split(' ')[0] ?? ''}!`}>
             <p>
-              Elegiste el plan <strong>{cuenta.plan.nombre}</strong> con pago por <strong>{MEDIO[cuenta.suscripcion?.medio ?? 'transferencia']}</strong>.
-              Cuando se acredite el pago arrancamos con el tutorial para dejar tu IA funcionando.
+              Tu cuenta del plan <strong>{cuenta.plan.nombre}</strong> ya está creada. Podés recorrer Mi IA, la conexión, el simulador y la agenda.
+              Hasta que pagues con Mercado Pago, esas pantallas se ven pero no guardan cambios ni responden mensajes.
             </p>
             <PagoBloque cuenta={cuenta} />
             <p className="small muted">
-              ¿Querés otro plan o medio de pago? Cambialo en <Link to="/cuenta/plan">Plan y pagos</Link>.
+              ¿Querés otro plan? Cambialo en <Link to="/cuenta/plan">Plan y pagos</Link>.
             </p>
           </Section>
         </div>
@@ -226,12 +232,23 @@ function ProximosTurnos({ limite }: { limite?: number }) {
   );
 }
 
-export function Agenda() {
+function ZonaExplorar({ cuenta, children }: { cuenta: Cuenta; children: ReactNode }) {
+  if (cuenta.onboarding.requisitos.pago || cuenta.onboarding.completado) return <>{children}</>;
   return (
-    <>
+    <div className="explorar">
+      <p className="aviso-explorar">Estás explorando. Esta parte se habilita cuando se acredita el pago con Mercado Pago.</p>
+      <fieldset disabled>{children}</fieldset>
+    </div>
+  );
+}
+
+export function Agenda() {
+  const cuenta = useCuentaActual();
+  return (
+    <ZonaExplorar cuenta={cuenta}>
       <h1>Agenda</h1>
       <ProximosTurnos />
-    </>
+    </ZonaExplorar>
   );
 }
 
@@ -242,7 +259,7 @@ export function MiIA() {
     ? (['espera', 'tope', 'handoff', 'recordatorio'] as const)
     : (['espera', 'tope', 'handoff'] as const);
   return (
-    <>
+    <ZonaExplorar cuenta={cuenta}>
       <h1>Mi IA</h1>
       <Section title="Información del negocio">
         <PerfilForm cuenta={cuenta} secciones={['negocio', 'turnos', 'estilo']} boton="Guardar cambios" />
@@ -260,7 +277,7 @@ export function MiIA() {
       >
         {avanzado ? <PromptAvanzado cuenta={cuenta} /> : <p className="small muted">Las instrucciones que armamos con tu información. Solo si sabés lo que hacés.</p>}
       </Section>
-    </>
+    </ZonaExplorar>
   );
 }
 
@@ -283,19 +300,19 @@ function PromptAvanzado({ cuenta }: { cuenta: Cuenta }) {
 export function Probar() {
   const cuenta = useCuentaActual();
   return (
-    <>
+    <ZonaExplorar cuenta={cuenta}>
       <h1>Probar mi IA</h1>
       <Section title="Simulador">
         <Simulador cuenta={cuenta} />
       </Section>
-    </>
+    </ZonaExplorar>
   );
 }
 
 export function Conexion() {
   const cuenta = useCuentaActual();
   return (
-    <>
+    <ZonaExplorar cuenta={cuenta}>
       <h1>Conexión</h1>
       <Section title="ManyChat">
         <ManychatForm cuenta={cuenta} boton="Guardar" />
@@ -306,7 +323,7 @@ export function Conexion() {
       <Section title="Guía del flujo">
         <GuiaManychat cuenta={cuenta} />
       </Section>
-    </>
+    </ZonaExplorar>
   );
 }
 
@@ -315,7 +332,6 @@ export function PlanYPagos() {
   const planes = useQuery({ queryKey: ['publico-planes'], queryFn: () => api<Plan[]>('/publico/planes') });
   const pagos = useQuery({ queryKey: ['cuenta-pagos'], queryFn: () => api<Pago[]>('/cuenta/pagos') });
   const [planId, setPlanId] = useState<PlanId>(cuenta.plan.id);
-  const [medio, setMedio] = useState<MedioPago>(cuenta.suscripcion?.medio ?? 'transferencia');
   const cambiar = useAccionCuenta();
   const personalizado = cuenta.plan.id === 'personalizado';
 
@@ -325,7 +341,7 @@ export function PlanYPagos() {
       alert(`El plan ${plan.nombre} admite ${plan.maxCanales} canal(es). Quitá canales antes de cambiar.`);
       return;
     }
-    const body = { ...(planId === cuenta.plan.id ? {} : { planId }), ...(medio === cuenta.suscripcion?.medio ? {} : { medio }) };
+    const body = planId === cuenta.plan.id ? {} : { planId };
     if (confirm('El nuevo importe se aplica desde el próximo período. ¿Confirmás el cambio?')) cambiar.mutate({ path: 'plan', method: 'PATCH', body });
   };
 
@@ -341,24 +357,20 @@ export function PlanYPagos() {
           </p>
         )}
       </Section>
-      <Section title="Cambiar plan o medio de pago">
+      <Section title="Cambiar de plan">
         {personalizado ? (
-          <p>Tu plan es Personalizado. Para cambios de alcance o de medio de pago escribinos y lo coordinamos.</p>
+          <p>Tu plan es Personalizado. Para cambios de alcance escribinos y lo coordinamos.</p>
         ) : (
           <>
             <div className="row">
               <select aria-label="Plan" value={planId} onChange={(e) => setPlanId(e.target.value as PlanId)}>
                 {planes.data?.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.nombre} ({pesos(medio === 'mercadopago' ? p.precioMercadoPago : p.precioTransferencia)}/mes)
+                    {p.nombre} ({pesos(p.precioMercadoPago)}/mes)
                   </option>
                 ))}
               </select>
-              <select aria-label="Medio de pago" value={medio} onChange={(e) => setMedio(e.target.value as MedioPago)}>
-                <option value="mercadopago">Mercado Pago</option>
-                <option value="transferencia">Transferencia</option>
-              </select>
-              <button onClick={guardar} disabled={cambiar.isPending || (planId === cuenta.plan.id && medio === cuenta.suscripcion?.medio)}>
+              <button onClick={guardar} disabled={cambiar.isPending || planId === cuenta.plan.id}>
                 Guardar cambio
               </button>
             </div>

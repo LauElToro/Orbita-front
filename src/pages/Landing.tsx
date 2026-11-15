@@ -1,10 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { PlanCard } from '../components/Planes';
 import { PaginaSitio } from '../components/Sitio';
-import type { MedioPago, Plan } from '../types';
+import type { Plan } from '../types';
 
 const BENEFICIOS = [
   { titulo: 'Responde en segundos', texto: 'Precios, horarios, envíos y medios de pago, a cualquier hora y sin dejar a nadie en visto.' },
@@ -14,9 +13,9 @@ const BENEFICIOS = [
 ];
 
 const PASOS = [
-  { titulo: 'Elegís tu plan', texto: 'Te registrás en dos minutos y pagás con Mercado Pago o transferencia.' },
+  { titulo: 'Creás tu cuenta', texto: 'Te registrás en dos minutos y recorrés el panel. La IA se habilita cuando pagás con Mercado Pago.' },
   { titulo: 'Le contás de tu negocio', texto: 'Un tutorial guiado te pregunta lo que tu IA necesita saber. Sin escribir prompts.' },
-  { titulo: 'Conectás ManyChat', texto: 'Te mostramos paso a paso dónde pegar cada dato. Funciona con WhatsApp, Instagram y Telegram.' },
+  { titulo: 'Conectás ManyChat', texto: 'Te mostramos paso a paso dónde pegar cada dato. Funciona con WhatsApp, Instagram y TikTok.' },
   { titulo: 'Probás y activás', texto: 'Chateás con tu IA en el simulador y, cuando te convence, la activás con un clic.' },
 ];
 
@@ -24,7 +23,7 @@ const CONFIANZA = [
   { titulo: 'Sin permanencia', texto: 'Abono mensual. Cambiás de plan o das de baja cuando quieras.' },
   { titulo: '10 días para arrepentirte', texto: 'Si no es lo que esperabas, revocás la contratación desde el botón de arrepentimiento.' },
   { titulo: 'Datos protegidos', texto: 'Credenciales cifradas, contraseñas con hash y tratamiento según la Ley 25.326.' },
-  { titulo: 'Pagos seguros', texto: 'Cobramos con Mercado Pago o transferencia. Nunca vemos los datos de tu tarjeta.' },
+  { titulo: 'Pagos seguros', texto: 'Cobramos solo con Mercado Pago. Nunca vemos los datos de tu tarjeta.' },
 ];
 
 const PREGUNTAS = [
@@ -34,7 +33,7 @@ const PREGUNTAS = [
   },
   {
     p: '¿Qué necesito para conectarla?',
-    r: 'Una cuenta de ManyChat con tu WhatsApp, Instagram o Telegram conectado. En el tutorial te mostramos exactamente qué configurar.',
+    r: 'Una cuenta de ManyChat con tu WhatsApp, Instagram o TikTok conectado. En el tutorial te mostramos exactamente qué configurar.',
   },
   {
     p: '¿Qué pasa si la IA no sabe algo?',
@@ -76,7 +75,6 @@ function ChatDemo() {
 
 export function Landing() {
   const planes = useQuery({ queryKey: ['publico-planes'], queryFn: () => api<Plan[]>('/publico/planes') });
-  const [medio, setMedio] = useState<MedioPago>('transferencia');
 
   return (
     <PaginaSitio>
@@ -85,7 +83,7 @@ export function Landing() {
           <span className="eyebrow">Asistente con IA para comercios</span>
           <h1>Tu comercio responde al instante, las 24 horas.</h1>
           <p className="hero-sub">
-            Orbita atiende a tus clientes por WhatsApp, Instagram y Telegram con la información de tu negocio: responde consultas, agenda
+            Orbita atiende a tus clientes por WhatsApp, Instagram y TikTok con la información de tu negocio: responde consultas, agenda
             turnos y te pasa la charla cuando hace falta.
           </p>
           <div className="actions">
@@ -96,7 +94,7 @@ export function Landing() {
               Ver planes
             </a>
           </div>
-          <p className="small hero-nota">Sin permanencia · 10 días para arrepentirte · Configuración guiada</p>
+          <p className="small hero-nota">Creá la cuenta y explorá gratis · La IA se habilita al pagar · 10 días para arrepentirte</p>
         </div>
         <ChatDemo />
       </section>
@@ -105,7 +103,7 @@ export function Landing() {
         <span>Se conecta mediante ManyChat con</span>
         <strong>WhatsApp</strong>
         <strong>Instagram</strong>
-        <strong>Telegram</strong>
+        <strong>TikTok</strong>
       </section>
 
       <section className="bloque">
@@ -135,23 +133,16 @@ export function Landing() {
 
       <section className="bloque" id="planes">
         <h2 className="bloque-titulo">Planes claros, en pesos y sin sorpresas</h2>
-        <div className="toggle" role="group" aria-label="Medio de pago">
-          <button type="button" className={medio === 'transferencia' ? 'on' : ''} onClick={() => setMedio('transferencia')}>
-            Transferencia
-          </button>
-          <button type="button" className={medio === 'mercadopago' ? 'on' : ''} onClick={() => setMedio('mercadopago')}>
-            Mercado Pago
-          </button>
-        </div>
+        <p className="small muted centrado">Todos los planes se pagan con Mercado Pago.</p>
         {planes.isLoading && <p className="muted centrado">Cargando planes...</p>}
         <div className="planes">
           {planes.data?.map((p) => (
             <PlanCard
               key={p.id}
               plan={p}
-              medio={medio}
+              medio="mercadopago"
               accion={
-                <Link to={`/registro?plan=${p.id}&medio=${medio}`} className="button">
+                <Link to={`/registro?plan=${p.id}`} className="button">
                   Elegir {p.nombre}
                 </Link>
               }

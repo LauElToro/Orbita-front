@@ -71,14 +71,6 @@ function BloqueEstado({ ficha, onChange }: BloqueProps) {
               Activar
             </button>
           )}
-          {sub?.medio === 'transferencia' && (
-            <button
-              className="secondary"
-              onClick={() => confirm('¿Marcar como pagada la transferencia de este mes?') && accion.mutate({ path: '/transferencia' })}
-            >
-              Marcar transferencia
-            </button>
-          )}
         </>
       }
     >
@@ -155,7 +147,6 @@ function BloquePlan({ ficha, onChange }: BloqueProps) {
   const planes = useQuery({ queryKey: ['planes'], queryFn: () => api<Plan[]>('/planes') });
   const accion = useAccion(ficha.id, onChange);
   const [planId, setPlanId] = useState<PlanId>(ficha.planId);
-  const [medio, setMedio] = useState(ficha.subscription?.medio ?? 'transferencia');
 
   const cambiar = () => {
     const plan = planes.data?.find((p) => p.id === planId);
@@ -192,17 +183,6 @@ function BloquePlan({ ficha, onChange }: BloqueProps) {
         </select>
         <button className="secondary" onClick={cambiar} disabled={planId === ficha.planId}>
           Cambiar plan
-        </button>
-        <select aria-label="Medio de pago" value={medio} onChange={(e) => setMedio(e.target.value as typeof medio)}>
-          <option value="mercadopago">Mercado Pago</option>
-          <option value="transferencia">Transferencia</option>
-        </select>
-        <button
-          className="secondary"
-          disabled={medio === ficha.subscription?.medio}
-          onClick={() => accion.mutate({ path: '', method: 'PATCH', body: { medio } })}
-        >
-          Cambiar medio
         </button>
       </div>
       <ErrorMsg error={accion.error} />

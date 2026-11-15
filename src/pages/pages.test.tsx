@@ -72,8 +72,6 @@ describe('panel del equipo', () => {
     expect(screen.queryByRole('option', { name: 'Personalizado' })).not.toBeInTheDocument();
     await userEvent.selectOptions(screen.getByLabelText('Plan'), 'turnos');
     expect(screen.getByText(/84\.000/)).toBeInTheDocument();
-    await userEvent.selectOptions(screen.getByLabelText('Medio de pago'), 'transferencia');
-    expect(screen.getByText(/80\.000/)).toBeInTheDocument();
 
     await userEvent.type(screen.getByLabelText('pageId de ManyChat'), '123');
     await userEvent.type(screen.getByLabelText('appToken de ManyChat'), 'tok');
@@ -85,7 +83,7 @@ describe('panel del equipo', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Crear cliente' }));
 
     expect(await screen.findByRole('heading', { name: 'Pizzería Norte' })).toBeInTheDocument();
-    expect(enviado).toMatchObject({ clientId: 'pizzeria-norte', planId: 'turnos', medio: 'transferencia', canales: [{ endpointId: '54911' }] });
+    expect(enviado).toMatchObject({ clientId: 'pizzeria-norte', planId: 'turnos', medio: 'mercadopago', canales: [{ endpointId: '54911' }] });
   });
 
   it('la ficha muestra los bloques y ejecuta acciones', async () => {
@@ -103,7 +101,6 @@ describe('panel del equipo', () => {
         { id: 't1', nombre: 'Ana', fecha: '2026-11-20T23:30:00.000Z', estado: 'reservado', recordatorioEnviado: true },
       ],
       'POST /clientes/pizzeria-norte/pausar': { ...FICHA, estado: 'pausado', pausaMotivo: 'manual' },
-      'POST /clientes/pizzeria-norte/transferencia': FICHA,
       'PUT /clientes/pizzeria-norte/prompt': { ...FICHA, prompt: 'Nuevo' },
       'PATCH /clientes/pizzeria-norte': FICHA,
     });
@@ -119,7 +116,6 @@ describe('panel del equipo', () => {
     expect(await screen.findByText('(manual)')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Activar' })).toBeEnabled();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Marcar transferencia' }));
     await userEvent.clear(screen.getByLabelText('Prompt'));
     await userEvent.type(screen.getByLabelText('Prompt'), 'Nuevo');
     await userEvent.click(screen.getByRole('button', { name: 'Guardar prompt' }));
@@ -134,7 +130,7 @@ describe('panel del equipo', () => {
 
     await waitFor(() => {
       const llamadas = fetch.mock.calls.map(([u, i]) => `${i?.method ?? 'GET'} ${String(u)}`);
-      expect(llamadas).toContain('POST /api/clientes/pizzeria-norte/transferencia');
+      expect(llamadas).not.toContain('POST /api/clientes/pizzeria-norte/transferencia');
       expect(llamadas.filter((l) => l === 'PATCH /api/clientes/pizzeria-norte')).toHaveLength(4);
     });
   });
@@ -185,14 +181,13 @@ describe('páginas públicas', () => {
     diasGracia: 7,
   };
 
-  it('cliente con transferencia ve alias, importe y concepto', async () => {
+  it('la página pública no muestra datos de transferencia', async () => {
     mockApi({
-      'GET /publico/tok': { ...base, medio: 'transferencia', mercadopago: null, transferencia: { alias: 'orbita.alias', importe: 80000, concepto: 'pizzeria-norte' } },
+      'GET /publico/tok': { ...base, medio: 'mercadopago', mercadopago: null, transferencia: { alias: 'orbita.alias', importe: 80000, concepto: 'pizzeria-norte' } },
     });
     renderApp('/p/tok');
-    expect(await screen.findByText('orbita.alias')).toBeInTheDocument();
-    expect(screen.getByText('pizzeria-norte')).toBeInTheDocument();
-    expect(screen.getByText(/día 7 desde el vencimiento/)).toBeInTheDocument();
+    expect(await screen.findByText('Pizzería Norte')).toBeInTheDocument();
+    expect(screen.queryByText('orbita.alias')).not.toBeInTheDocument();
     expect(screen.queryByText(/Plan Mensajes|Cambiar plan/)).not.toBeInTheDocument();
   });
 

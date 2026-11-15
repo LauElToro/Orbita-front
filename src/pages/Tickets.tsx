@@ -5,7 +5,7 @@ import { api } from '../api';
 import { CanalesEditor, canalVacio } from '../components/CanalesEditor';
 import { Badge, ErrorMsg, Section } from '../components/ui';
 import { ESTADO_TICKET, fecha, pesos } from '../format';
-import type { Canal, Ficha, MedioPago, Ticket, TicketEstado, TicketTipo } from '../types';
+import type { Canal, Ficha, Ticket, TicketEstado, TicketTipo } from '../types';
 import { slug } from './Alta';
 
 const ESTADOS = Object.keys(ESTADO_TICKET) as TicketEstado[];
@@ -169,7 +169,7 @@ function ConvertirTicket({ ticket }: { ticket: Ticket }) {
   const [form, setForm] = useState({
     clientId: slug(ticket.empresa),
     nombre: ticket.empresa,
-    medio: 'transferencia' as MedioPago,
+    medio: 'mercadopago' as const,
     pageId: '',
     appToken: '',
     prompt: '',
@@ -200,13 +200,6 @@ function ConvertirTicket({ ticket }: { ticket: Ticket }) {
           <label>
             clientId
             <input value={form.clientId} onChange={(e) => set({ clientId: e.target.value })} required />
-          </label>
-          <label>
-            Medio de pago
-            <select value={form.medio} onChange={(e) => set({ medio: e.target.value as MedioPago })}>
-              <option value="transferencia">Transferencia</option>
-              <option value="mercadopago">Mercado Pago</option>
-            </select>
           </label>
           <label>
             pageId de ManyChat

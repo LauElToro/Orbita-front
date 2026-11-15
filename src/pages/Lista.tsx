@@ -46,6 +46,7 @@ export function Lista() {
                 <td>{c.canales.map((k) => k.etiqueta).join(', ')}</td>
                 <td>
                   <Badge tone={c.estado === 'activo' ? 'ok' : 'muted'}>{c.estado}</Badge>
+                  {c.pausaMotivo === 'onboarding' && c.estadoPago !== 'al_dia' && <Badge tone="warn">Lead</Badge>}
                   {c.pausaMotivo === 'onboarding' && <div className="muted small">en onboarding</div>}
                 </td>
                 <td>

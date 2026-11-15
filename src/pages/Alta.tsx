@@ -97,13 +97,6 @@ export function Alta() {
           </select>
         </label>
         <label>
-          Medio de pago
-          <select value={form.medio} onChange={(e) => set({ medio: e.target.value as MedioPago })}>
-            <option value="mercadopago">Mercado Pago</option>
-            <option value="transferencia">Transferencia</option>
-          </select>
-        </label>
-        <label>
           pageId de ManyChat
           <input value={form.pageId} onChange={(e) => set({ pageId: e.target.value })} required />
         </label>
@@ -119,8 +112,7 @@ export function Alta() {
 
       {plan && (
         <p className="precio">
-          Va a pagar <strong>{pesos(form.medio === 'mercadopago' ? plan.precioMercadoPago : plan.precioTransferencia)}</strong> por mes
-          con {form.medio === 'mercadopago' ? 'Mercado Pago' : 'transferencia'}. Topes: {plan.topeDia} por día, {plan.topeSemana} por
+          Va a pagar <strong>{pesos(plan.precioMercadoPago)}</strong> por mes con Mercado Pago. Topes: {plan.topeDia} por día, {plan.topeSemana} por
           semana, {plan.topeMes} por mes. Módulos: {plan.modulos.join(', ')}.
         </p>
       )}

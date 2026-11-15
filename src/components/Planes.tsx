@@ -6,7 +6,7 @@ export function beneficiosDe(plan: Plan): string[] {
   const m = plan.modulos;
   return [
     `Hasta ${plan.topeMes.toLocaleString('es-AR')} respuestas por mes`,
-    `${plan.maxCanales} ${plan.maxCanales === 1 ? 'canal' : 'canales'} (WhatsApp, Instagram o Telegram)`,
+    `${plan.maxCanales} ${plan.maxCanales === 1 ? 'canal' : 'canales'} (WhatsApp, Instagram o TikTok)`,
     'Responde preguntas frecuentes con la info de tu negocio',
     m.includes('handoff') && 'Te pasa la conversación cuando hace falta una persona',
     m.includes('turnos') && 'Agenda y cancela turnos solo',
@@ -40,7 +40,7 @@ export function PlanCard({
         {pesos(precioDe(plan, medio))}
         <span>/mes</span>
       </p>
-      <p className="small muted">{medio === 'mercadopago' ? 'Débito automático con Mercado Pago' : 'Pagando por transferencia'}</p>
+      <p className="small muted">Débito automático con Mercado Pago</p>
       <ul className="plan-lista">
         {beneficiosDe(plan).map((b) => (
           <li key={b}>{b}</li>

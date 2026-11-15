@@ -62,6 +62,12 @@ export function Dashboard() {
         <Kpi label="Cobrado (30 días)" valor={pesos(m.ingresos.cobrado30d)} detalle={m.ingresos.porAcreditar ? `${pesos(m.ingresos.porAcreditar)} por acreditar` : undefined} />
         <Kpi label="MRR en riesgo" valor={pesos(m.ingresos.mrrEnRiesgo)} detalle="Pagos pendientes o impagos" tono={m.ingresos.mrrEnRiesgo ? 'warn' : undefined} />
         <Kpi label="Clientes activos" valor={`${m.clientes.activos} / ${operativos}`} detalle={`${m.clientes.enOnboarding} en onboarding`} />
+        <Kpi
+          label="Leads"
+          valor={String(m.embudo.onboardingSinPago)}
+          detalle="Se registraron y todavía no pagaron"
+          tono={m.embudo.onboardingSinPago ? 'warn' : undefined}
+        />
         <Kpi label="Respuestas hoy" valor={numero(m.mensajes.hoy)} detalle={`${numero(m.mensajes.ultimos30)} en 30 días`} />
         <Kpi
           label="Arrepentimientos"
@@ -114,7 +120,7 @@ export function Dashboard() {
             <dd>{m.embudo.registros30d}</dd>
             <dt>En onboarding</dt>
             <dd>{m.embudo.enOnboarding}</dd>
-            <dt>Sin pagar aún</dt>
+            <dt>Leads</dt>
             <dd>{m.embudo.onboardingSinPago}</dd>
             <dt>Activados</dt>
             <dd>{m.embudo.activados30d}</dd>

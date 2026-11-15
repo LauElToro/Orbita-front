@@ -25,18 +25,19 @@ describe('registro y acceso del cliente', () => {
         return { status: 201, body: { token: 'jwt-nuevo' } };
       },
       'GET /cuenta/me': cuenta({
-        suscripcion: { medio: 'transferencia', estadoPago: 'pendiente', vencimiento: '2026-11-14T15:00:00.000Z', importe: 110000, mpInitPoint: null },
+        suscripcion: { medio: 'mercadopago', estadoPago: 'pendiente', vencimiento: '2026-11-14T15:00:00.000Z', importe: 115000, mpInitPoint: null },
+        transferencia: null,
         onboarding: { paso: 0, completado: null, requisitos: { pago: false, manychat: false, canal: false, prompt: false } },
       }),
     });
-    renderApp('/registro?plan=completo&medio=transferencia');
+    renderApp('/registro?plan=completo');
     expect(await screen.findByRole('button', { name: 'Seleccionado' })).toBeInTheDocument();
     await userEvent.type(screen.getByLabelText('Nombre del negocio'), 'Peluquería Luna');
     await userEvent.type(screen.getByLabelText('Rubro'), 'Estética');
     await userEvent.type(screen.getByLabelText('Tu nombre'), 'Sofía Pérez');
     await userEvent.type(screen.getByLabelText('Email'), 'sofia@luna.com');
     await userEvent.type(screen.getByLabelText(/^Contraseña/), 'clave-segura-1');
-    const crear = screen.getByRole('button', { name: 'Crear cuenta y continuar al pago' });
+    const crear = screen.getByRole('button', { name: 'Crear cuenta y explorar' });
     expect(crear).toBeDisabled();
     const [terminos, privacidad] = screen.getAllByRole('checkbox');
     await userEvent.click(terminos);
@@ -45,8 +46,12 @@ describe('registro y acceso del cliente', () => {
     await userEvent.click(crear);
 
     expect(await screen.findByText(/Bienvenido a Orbita, Sofía/)).toBeInTheDocument();
-    expect(screen.getByText('orbita.alias')).toBeInTheDocument();
-    expect(body).toMatchObject({ planId: 'completo', medio: 'transferencia', aceptaTerminos: true, aceptaPrivacidad: true });
+    expect(screen.getByRole('button', { name: 'Pagar con Mercado Pago' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Mi IA' })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('link', { name: 'Mi IA' }));
+    expect(await screen.findByText(/Esta parte se habilita cuando se acredita el pago/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Guardar cambios' })).toBeDisabled();
+    expect(body).toMatchObject({ planId: 'completo', medio: 'mercadopago', aceptaTerminos: true, aceptaPrivacidad: true });
     expect(sesionCliente.get()).toBe('jwt-nuevo');
   });
 
@@ -370,9 +375,8 @@ describe('panel del cliente', () => {
     expect(screen.getByText('Tu pago está al día. ¡Gracias!')).toBeInTheDocument();
     await screen.findByRole('option', { name: /Completo/ });
     await userEvent.selectOptions(screen.getByLabelText('Plan'), 'completo');
-    await userEvent.selectOptions(screen.getByLabelText('Medio de pago'), 'mercadopago');
     await userEvent.click(screen.getByRole('button', { name: 'Guardar cambio' }));
-    await waitFor(() => expect(body).toEqual({ planId: 'completo', medio: 'mercadopago' }));
+    await waitFor(() => expect(body).toEqual({ planId: 'completo' }));
   });
 
   it('el plan Personalizado no se cambia desde el panel', async () => {

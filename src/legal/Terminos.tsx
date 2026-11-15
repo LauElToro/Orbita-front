@@ -29,11 +29,11 @@ export function Terminos() {
         <h2>2. Definiciones</h2>
         <ul>
           <li>
-            <strong>Contactos:</strong> las personas que escriben al Cliente por WhatsApp, Instagram, Telegram u otros canales y que son
+            <strong>Contactos:</strong> las personas que escriben al Cliente por WhatsApp, Instagram, TikTok u otros canales y que son
             atendidas por el asistente.
           </li>
           <li>
-            <strong>Plataformas de terceros:</strong> ManyChat, Meta (WhatsApp e Instagram), Telegram, los proveedores de modelos de
+            <strong>Plataformas de terceros:</strong> ManyChat, Meta (WhatsApp e Instagram), TikTok, los proveedores de modelos de
             inteligencia artificial, Mercado Pago y cualquier otro servicio externo del que depende el Servicio.
           </li>
           <li>
@@ -101,7 +101,7 @@ export function Terminos() {
         </ul>
         <p>
           El Cliente debe cumplir en todo momento las condiciones y políticas de ManyChat, Meta (incluidas las políticas de WhatsApp Business)
-          y Telegram. Ante un incumplimiento o un riesgo para el Servicio, Orbita puede suspender el Servicio de inmediato y sin previo aviso,
+          y TikTok. Ante un incumplimiento o un riesgo para el Servicio, Orbita puede suspender el Servicio de inmediato y sin previo aviso,
           sin que ello genere derecho a reintegro ni indemnización.
         </p>
 
@@ -113,8 +113,9 @@ export function Terminos() {
             cambia de plan.
           </li>
           <li>
-            Los pagos se realizan por débito automático de Mercado Pago o por transferencia bancaria. Orbita no almacena datos de tarjetas; el
-            procesamiento lo realiza Mercado Pago bajo sus propios términos.
+            Los pagos se realizan por débito automático de Mercado Pago. Orbita no almacena datos de tarjetas; el procesamiento lo realiza
+            Mercado Pago bajo sus propios términos. Podés crear la cuenta y recorrer el panel antes de pagar; el asistente se habilita cuando
+            el pago se acredita.
           </li>
           <li>
             Si el pago no se acredita, el Servicio se pausa automáticamente una vez vencido el período de gracia informado en el panel, sin

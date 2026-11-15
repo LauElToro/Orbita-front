@@ -102,7 +102,7 @@ export function PerfilForm({ cuenta, secciones, boton = 'Guardar', onGuardado }:
             <input
               value={perfil.pagosEnvios}
               onChange={(e) => set({ pagosEnvios: e.target.value })}
-              placeholder="Efectivo, transferencia y Mercado Pago. Delivery gratis hasta 2 km."
+              placeholder="Efectivo y Mercado Pago. Delivery gratis hasta 2 km."
             />
           </label>
         </>
@@ -337,7 +337,7 @@ export function CanalesForm({ cuenta, boton = 'Guardar canales', onGuardado }: F
     <form onSubmit={enviar}>
       <p className="small muted">
         El ID del canal es el que ManyChat manda en cada mensaje: en WhatsApp el <em>phone number ID</em>, en Instagram el <em>page ID</em> y en
-        Telegram el <em>bot ID</em>. Tu plan {cuenta.plan.nombre} admite {cuenta.plan.maxCanales}{' '}
+        TikTok el identificador de la cuenta. Tu plan {cuenta.plan.nombre} admite {cuenta.plan.maxCanales}{' '}
         {cuenta.plan.maxCanales === 1 ? 'canal' : 'canales'}.
       </p>
       <CanalesEditor value={canales} max={cuenta.plan.maxCanales} onChange={setCanales} />
@@ -442,31 +442,12 @@ export function PagoBloque({ cuenta }: { cuenta: Cuenta }) {
       <p>
         Importe mensual: <strong>{pesos(sub.importe)}</strong>
       </p>
-      {sub.medio === 'mercadopago' ? (
-        <>
-          <p className="small muted">Te llevamos a Mercado Pago para aprobar el débito automático mensual. Podés cancelarlo cuando quieras.</p>
-          <ErrorMsg error={mp.error} />
-          <button onClick={() => (sub.mpInitPoint ? location.assign(sub.mpInitPoint) : mp.mutate())} disabled={mp.isPending}>
-            {mp.isPending ? 'Abriendo Mercado Pago...' : 'Pagar con Mercado Pago'}
-          </button>
-        </>
-      ) : (
-        cuenta.transferencia && (
-          <dl className="kv">
-            <dt>Alias</dt>
-            <dd>
-              <Copiar texto={cuenta.transferencia.alias} />
-            </dd>
-            <dt>Importe</dt>
-            <dd>{pesos(cuenta.transferencia.importe)}</dd>
-            <dt>Concepto</dt>
-            <dd>
-              <Copiar texto={cuenta.transferencia.concepto} />
-            </dd>
-          </dl>
-        )
-      )}
-      <p className="small muted">Cuando se acredite el pago, esta pantalla se actualiza sola y arrancamos con el tutorial.</p>
+      <p className="small muted">Te llevamos a Mercado Pago para aprobar el débito automático mensual. Podés cancelarlo cuando quieras.</p>
+      <ErrorMsg error={mp.error} />
+      <button onClick={() => (sub.mpInitPoint ? location.assign(sub.mpInitPoint) : mp.mutate())} disabled={mp.isPending}>
+        {mp.isPending ? 'Abriendo Mercado Pago...' : 'Pagar con Mercado Pago'}
+      </button>
+      <p className="small muted">Cuando se acredite el pago, arrancamos con el tutorial y se habilita el resto del panel.</p>
     </div>
   );
 }

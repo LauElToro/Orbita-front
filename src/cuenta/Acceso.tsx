@@ -5,7 +5,7 @@ import { api, sesionCliente } from '../api';
 import { PlanCard } from '../components/Planes';
 import { PaginaSitio } from '../components/Sitio';
 import { Check, ErrorMsg } from '../components/ui';
-import type { MedioPago, Plan, PlanId } from '../types';
+import type { Plan, PlanId } from '../types';
 
 export function Registro() {
   const navigate = useNavigate();
@@ -18,7 +18,7 @@ export function Registro() {
     email: '',
     password: '',
     planId: (params.get('plan') as PlanId | null) ?? 'turnos',
-    medio: (params.get('medio') as MedioPago | null) ?? 'mercadopago',
+    medio: 'mercadopago' as const,
   });
   const [terminos, setTerminos] = useState(false);
   const [privacidad, setPrivacidad] = useState(false);
@@ -45,21 +45,13 @@ export function Registro() {
       <form className="registro" onSubmit={enviar}>
         <div className="registro-planes">
           <h1>Creá tu cuenta</h1>
-          <p className="muted">Elegí un plan. Podés cambiarlo cuando quieras.</p>
-          <div className="toggle" role="group" aria-label="Medio de pago">
-            <button type="button" className={form.medio === 'mercadopago' ? 'on' : ''} onClick={() => set({ medio: 'mercadopago' })}>
-              Mercado Pago
-            </button>
-            <button type="button" className={form.medio === 'transferencia' ? 'on' : ''} onClick={() => set({ medio: 'transferencia' })}>
-              Transferencia
-            </button>
-          </div>
+          <p className="muted">Elegí un plan y recorré el panel. La IA se habilita cuando pagás con Mercado Pago.</p>
           <div className="planes planes-compactos">
             {planes.data?.map((p) => (
               <PlanCard
                 key={p.id}
                 plan={p}
-                medio={form.medio}
+                medio="mercadopago"
                 seleccionado={p.id === form.planId}
                 accion={
                   <button type="button" className={p.id === form.planId ? '' : 'secondary'} onClick={() => set({ planId: p.id })}>
@@ -115,7 +107,7 @@ export function Registro() {
           </Check>
           <ErrorMsg error={registrar.error} />
           <button type="submit" disabled={registrar.isPending || !terminos || !privacidad}>
-            {registrar.isPending ? 'Creando cuenta...' : 'Crear cuenta y continuar al pago'}
+            {registrar.isPending ? 'Creando cuenta...' : 'Crear cuenta y explorar'}
           </button>
           <p className="small muted">
             ¿Ya tenés cuenta? <Link to="/ingresar">Ingresá</Link>

@@ -10,7 +10,7 @@ Las dos sesiones son independientes. `api()` elige el token según la ruta (`/cu
 Azul noche (`--noche`), violeta de marca (`--primary`) y un acento ámbar (`--acento`) que es el satélite del logo. El logo es un SVG en `components/Sitio.tsx`, junto con el header y el footer del sitio. Todo el estilo vive en `styles.css`.
 ## Sitio público
 ### Landing (`/`)
-Hero con una conversación de ejemplo, canales compatibles, beneficios, cómo funciona en cuatro pasos, planes (de `GET /publico/planes`, con selector de transferencia o Mercado Pago), bloque de confianza (sin permanencia, 10 días para arrepentirse, datos protegidos, pagos seguros), preguntas frecuentes y llamado final. Cada plan lleva a `/registro?plan=...&medio=...`; Personalizado lleva a `/contacto`.
+Hero con una conversación de ejemplo, canales compatibles (WhatsApp, Instagram y TikTok), beneficios, cómo funciona en cuatro pasos, planes (de `GET /publico/planes`, solo precio de Mercado Pago), bloque de confianza (sin permanencia, 10 días para arrepentirse, datos protegidos, pagos seguros), preguntas frecuentes y llamado final. Cada plan lleva a `/registro?plan=...`; Personalizado lleva a `/contacto`.
 ### Documentos legales
 - `/terminos` y `/privacidad`: texto versionado. La versión está en `legal/empresa.ts` (`VERSION_LEGAL`) y tiene que coincidir con `LEGAL` del backend.
 - Los datos de la empresa (razón social, CUIT, domicilio, emails, jurisdicción) están en `EMPRESA`, en el mismo archivo. Hoy tienen marcadores entre corchetes que hay que completar antes de publicar.
@@ -18,14 +18,14 @@ Hero con una conversación de ejemplo, canales compatibles, beneficios, cómo fu
 ### Contacto (`/contacto`)
 Pedido de IA personalizada: nombre, email, teléfono opcional, empresa, rubro y qué necesita. Hay que aceptar la Política de Privacidad. Tiene un campo trampa oculto contra bots.
 ### Página de pago (`/p/:token`)
-Sin cuenta, para fichas creadas por el equipo: plan, importe, vencimiento, uso del mes y cómo pagar (Mercado Pago o datos de transferencia).
+Sin cuenta, para fichas creadas por el equipo: plan, importe, vencimiento, uso del mes y el botón para aprobar el débito de Mercado Pago.
 ## Panel del comercio
 ### Registro, ingreso y contraseña
-- `/registro`: elige plan y medio, completa negocio, rubro, nombre, email y contraseña, y marca dos casillas obligatorias (Términos, que incluye que la IA puede equivocarse, y Privacidad). El botón queda deshabilitado hasta marcar las dos.
+- `/registro`: elige plan, completa negocio, rubro, nombre, email y contraseña, y marca dos casillas obligatorias (Términos, que incluye que la IA puede equivocarse, y Privacidad). El botón queda deshabilitado hasta marcar las dos. No hace falta pagar para entrar.
 - `/ingresar`: email y contraseña.
 - `/restablecer/:token`: elige contraseña nueva con el link que le pasa el equipo.
 ### Inicio (`/cuenta`)
-1. Sin pago acreditado: bienvenida y cómo pagar. Con Mercado Pago, un botón lleva a aprobar el débito. Con transferencia, alias, importe y concepto para copiar. La pantalla se refresca sola cada 30 segundos hasta que el pago se acredita.
+1. Sin pago acreditado: bienvenida, botón de Mercado Pago y el resto del panel visible para explorar. Mi IA, conexión, simulador y agenda se ven deshabilitados hasta que el pago se acredita. Esos registros aparecen como leads en el panel del equipo.
 2. Con pago y sin terminar: el tutorial.
 3. Terminado: estado de la IA (pausar o activar), plan y vencimiento, uso del día, la semana y el período, y próximos turnos si el plan los tiene.
 Si hay una versión nueva de los documentos legales, un modal bloquea el panel hasta aceptarla.

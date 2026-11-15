@@ -13,12 +13,11 @@ describe('sitio público', () => {
     renderApp('/');
     expect(screen.getByRole('heading', { level: 1, name: /responde al instante/ })).toBeInTheDocument();
     const elegir = await screen.findByRole('link', { name: 'Elegir Turnos' });
-    expect(elegir).toHaveAttribute('href', '/registro?plan=turnos&medio=transferencia');
-    expect(screen.getByText(/80\.000/)).toBeInTheDocument();
-
-    await userEvent.click(screen.getByRole('button', { name: 'Mercado Pago' }));
-    expect(screen.getByRole('link', { name: 'Elegir Turnos' })).toHaveAttribute('href', '/registro?plan=turnos&medio=mercadopago');
+    expect(elegir).toHaveAttribute('href', '/registro?plan=turnos');
     expect(screen.getByText(/84\.000/)).toBeInTheDocument();
+    expect(screen.getAllByText('TikTok').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Telegram')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Transferencia' })).not.toBeInTheDocument();
     expect(screen.getByText('El más elegido')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Hablemos' })).toHaveAttribute('href', '/contacto');
     expect(screen.getByRole('link', { name: 'Botón de arrepentimiento' })).toHaveAttribute('href', '/arrepentimiento');
