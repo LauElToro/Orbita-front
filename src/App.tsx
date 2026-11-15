@@ -1,7 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { RequireAuth } from './components/RequireAuth';
-import { Ingresar, Registro, Restablecer } from './cuenta/Acceso';
+import { GoogleVuelta, Ingresar, Olvide, Registro, Restablecer } from './cuenta/Acceso';
 import { Agenda, Ajustes, Conexion, CuentaLayout, Inicio, MiIA, PlanYPagos, Probar } from './cuenta/Panel';
 import { Arrepentimiento } from './legal/Arrepentimiento';
 import { Privacidad } from './legal/Privacidad';
@@ -28,6 +28,8 @@ export function App() {
 
       <Route path="/registro" element={<Registro />} />
       <Route path="/ingresar" element={<Ingresar />} />
+      <Route path="/olvide" element={<Olvide />} />
+      <Route path="/google/vuelta" element={<GoogleVuelta />} />
       <Route path="/restablecer/:token" element={<Restablecer />} />
       <Route path="/cuenta" element={<CuentaLayout />}>
         <Route index element={<Inicio />} />

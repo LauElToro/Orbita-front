@@ -31,13 +31,14 @@ describe('registro y acceso del cliente', () => {
       }),
     });
     renderApp('/registro?plan=completo');
-    expect(await screen.findByRole('button', { name: 'Seleccionado' })).toBeInTheDocument();
+    expect(await screen.findByRole('option', { name: /Completo/ })).toBeInTheDocument();
+    expect(screen.getByLabelText('Plan')).toHaveValue('completo');
     await userEvent.type(screen.getByLabelText('Nombre del negocio'), 'Peluquería Luna');
     await userEvent.type(screen.getByLabelText('Rubro'), 'Estética');
     await userEvent.type(screen.getByLabelText('Tu nombre'), 'Sofía Pérez');
     await userEvent.type(screen.getByLabelText('Email'), 'sofia@luna.com');
     await userEvent.type(screen.getByLabelText(/^Contraseña/), 'clave-segura-1');
-    const crear = screen.getByRole('button', { name: 'Crear cuenta y explorar' });
+    const crear = screen.getByRole('button', { name: 'Crear mi cuenta' });
     expect(crear).toBeDisabled();
     const [terminos, privacidad] = screen.getAllByRole('checkbox');
     await userEvent.click(terminos);
@@ -69,9 +70,9 @@ describe('registro y acceso del cliente', () => {
     renderApp('/ingresar');
     await userEvent.type(screen.getByLabelText('Email'), 'sofia@luna.com');
     await userEvent.type(screen.getByLabelText('Contraseña'), 'mala');
-    await userEvent.click(screen.getByRole('button', { name: 'Ingresar' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Iniciar sesión' }));
     expect(await screen.findByText('Email o contraseña incorrectos')).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Ingresar' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Iniciar sesión' }));
     expect(await screen.findByText('Respondiendo mensajes')).toBeInTheDocument();
     expect(localStorage.getItem('orbita.token')).toBeNull();
     const me = fetch.mock.calls.find(([u]) => String(u) === '/api/cuenta/me');
@@ -100,7 +101,7 @@ describe('registro y acceso del cliente', () => {
   it('sin sesión de cliente redirige a ingresar', async () => {
     mockApi({});
     renderApp('/cuenta');
-    expect(await screen.findByRole('heading', { name: 'Ingresá a tu cuenta' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Volvé a Orbita' })).toBeInTheDocument();
   });
 
   it('bloquea con el modal legal hasta aceptar la nueva versión', async () => {
