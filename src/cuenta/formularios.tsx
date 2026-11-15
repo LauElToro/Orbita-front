@@ -1,10 +1,10 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { api } from '../api';
 import { CanalesEditor, canalVacio } from '../components/CanalesEditor';
 import { Copiar, ErrorMsg } from '../components/ui';
 import { pesos } from '../format';
-import type { Canal, Cuenta, Mensajes, Perfil, Simulacion, Tono } from '../types';
+import type { Canal, Cuenta, Mensajes, Perfil, Plan, PlanId, Simulacion, Tono } from '../types';
 import { useAccionCuenta } from './useCuenta';
 
 interface FormProps {
@@ -427,6 +427,31 @@ export function Simulador({ cuenta }: { cuenta: Cuenta }) {
   );
 }
 
+function ElegirPlan() {
+  const planes = useQuery({ queryKey: ['publico-planes'], queryFn: () => api<Plan[]>('/publico/planes') });
+  const [planId, setPlanId] = useState<PlanId | ''>('');
+  const elegir = useAccionCuenta();
+  return (
+    <div className="pago-bloque">
+      <p>Todavía no elegiste un plan. Elegilo para poder pagar y activar la IA.</p>
+      <div className="row">
+        <select aria-label="Elegir plan" value={planId} onChange={(e) => setPlanId(e.target.value as PlanId)}>
+          <option value="">Elegí un plan</option>
+          {planes.data?.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.nombre} · {pesos(p.precioMercadoPago)}/mes
+            </option>
+          ))}
+        </select>
+        <button onClick={() => planId && elegir.mutate({ path: 'plan', method: 'PATCH', body: { planId } })} disabled={!planId || elegir.isPending}>
+          Elegir plan
+        </button>
+      </div>
+      <ErrorMsg error={elegir.error} />
+    </div>
+  );
+}
+
 export function PagoBloque({ cuenta }: { cuenta: Cuenta }) {
   const sub = cuenta.suscripcion;
   const mp = useMutation({
@@ -437,6 +462,7 @@ export function PagoBloque({ cuenta }: { cuenta: Cuenta }) {
   if (sub.estadoPago === 'al_dia') {
     return <p className="ok-msg">Tu pago está al día. ¡Gracias!</p>;
   }
+  if (!cuenta.planElegido) return <ElegirPlan />;
   return (
     <div className="pago-bloque">
       <p>

@@ -56,6 +56,44 @@ describe('registro y acceso del cliente', () => {
     expect(sesionCliente.get()).toBe('jwt-nuevo');
   });
 
+  it('registra sin plan por defecto y pide elegirlo antes de pagar', async () => {
+    let body: Record<string, unknown> = {};
+    const pendiente = {
+      suscripcion: { medio: 'mercadopago' as const, estadoPago: 'pendiente' as const, vencimiento: '2026-11-14T15:00:00.000Z', importe: 42000, mpInitPoint: null },
+      onboarding: { paso: 0, completado: null, requisitos: { pago: false, manychat: false, canal: false, prompt: false } },
+    };
+    let elegido = false;
+    mockApi({
+      'GET /publico/planes': PUBLICOS,
+      'POST /cuenta/registro': (init: RequestInit) => {
+        body = JSON.parse(String(init.body));
+        return { status: 201, body: { token: 'jwt-nuevo' } };
+      },
+      'GET /cuenta/me': () => ({ body: cuenta({ ...pendiente, planElegido: elegido }) }),
+      'PATCH /cuenta/plan': () => {
+        elegido = true;
+        return { body: cuenta({ ...pendiente, planElegido: true }) };
+      },
+    });
+    renderApp('/registro');
+    await screen.findByRole('option', { name: /Completo/ });
+    expect(screen.getByLabelText('Plan')).toHaveValue('');
+    await userEvent.type(screen.getByLabelText('Nombre del negocio'), 'Peluquería Luna');
+    await userEvent.type(screen.getByLabelText('Rubro'), 'Estética');
+    await userEvent.type(screen.getByLabelText('Tu nombre'), 'Sofía Pérez');
+    await userEvent.type(screen.getByLabelText('Email'), 'sofia@luna.com');
+    await userEvent.type(screen.getByLabelText(/^Contraseña/), 'clave-segura-1');
+    for (const c of screen.getAllByRole('checkbox')) await userEvent.click(c);
+    await userEvent.click(screen.getByRole('button', { name: 'Crear mi cuenta' }));
+
+    expect(await screen.findByText(/Todavía no elegiste un plan/)).toBeInTheDocument();
+    expect(body.planId).toBeUndefined();
+    expect(screen.queryByRole('button', { name: 'Pagar con Mercado Pago' })).toBeNull();
+    await userEvent.selectOptions(screen.getByLabelText('Elegir plan'), 'turnos');
+    await userEvent.click(screen.getByRole('button', { name: 'Elegir plan' }));
+    expect(await screen.findByRole('button', { name: 'Pagar con Mercado Pago' })).toBeInTheDocument();
+  });
+
   it('ingresa, muestra errores y separa la sesión del panel del equipo', async () => {
     let intentos = 0;
     const fetch = mockApi({

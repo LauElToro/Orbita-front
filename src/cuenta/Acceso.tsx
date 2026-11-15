@@ -7,73 +7,74 @@ import { Check, ErrorMsg } from '../components/ui';
 import { pesos } from '../format';
 import type { Plan, PlanId } from '../types';
 
-const SLIDES: { kicker: string; titulo: string; cuerpo: ReactNode }[] = [
-  {
-    kicker: 'Empezá hoy',
-    titulo: 'Tu comercio responde las 24 horas',
-    cuerpo: (
-      <>
-        <p>WhatsApp, Instagram y TikTok, con los precios, horarios y turnos de tu negocio.</p>
-        <p className="auth-pill">La cuenta se crea en un minuto</p>
-      </>
-    ),
-  },
-  {
-    kicker: 'Lo que incluye',
-    titulo: 'La IA trabaja con lo que vos cargás',
-    cuerpo: (
-      <ul className="auth-lista">
-        <li>Responde consultas a cualquier hora</li>
-        <li>Agenda turnos dentro de tus horarios</li>
-        <li>Te pasa la charla cuando hace falta una persona</li>
-        <li>La probás en el simulador antes de activarla</li>
-        <li>Sin permanencia, y 10 días para arrepentirte</li>
-      </ul>
-    ),
-  },
-  {
-    kicker: 'Cómo sigue',
-    titulo: 'Recorrés el panel y pagás cuando querés',
-    cuerpo: (
-      <ol className="auth-pasos">
-        <li>Creás la cuenta y mirás cómo se configura.</li>
-        <li>Cuando te cierra, pagás con Mercado Pago.</li>
-        <li>Ahí se habilita el tutorial y la IA empieza a responder.</li>
-      </ol>
-    ),
-  },
+const CHARLA: { de: 'cliente' | 'ia'; texto: string; hora: string }[] = [
+  { de: 'cliente', texto: 'Hola! ¿Tenés turno para corte mañana a la tarde?', hora: '23:41' },
+  { de: 'ia', texto: 'Hola, sí. Mañana tengo 16:00 y 17:30. El corte sale $8.000. ¿Cuál te queda mejor?', hora: '23:41' },
+  { de: 'cliente', texto: 'A las 17:30 porfa', hora: '23:42' },
+  { de: 'ia', texto: 'Listo, te agendé mañana a las 17:30. Te mando un recordatorio unas horas antes.', hora: '23:42' },
 ];
 
+const PRECIO_TURNO_EJEMPLO = 8000;
+
 function Promo() {
-  const [i, setI] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => setI((n) => (n + 1) % SLIDES.length), 7000);
-    return () => clearInterval(t);
-  }, []);
-  const slide = SLIDES[i];
+  const planes = useQuery({ queryKey: ['publico-planes'], queryFn: () => api<Plan[]>('/publico/planes') });
+  const turnos = planes.data?.find((p) => p.id === 'turnos');
   return (
     <aside className="auth-promo" aria-label="Por qué Orbita">
       <Link to="/" className="auth-logo" aria-label="Orbita, inicio">
         <Logo claro />
       </Link>
-      <article className="auth-tarjeta" key={slide.titulo}>
-        <p className="auth-kicker">{slide.kicker}</p>
-        <h2>{slide.titulo}</h2>
-        {slide.cuerpo}
-      </article>
-      <div className="auth-dots">
-        {SLIDES.map((s, n) => (
-          <button key={s.titulo} type="button" className={n === i ? 'on' : ''} aria-label={`Diapositiva ${n + 1}`} onClick={() => setI(n)} />
-        ))}
-        <span className="auth-flechas">
-          <button type="button" aria-label="Anterior" onClick={() => setI((n) => (n + SLIDES.length - 1) % SLIDES.length)}>
-            ‹
-          </button>
-          <button type="button" aria-label="Siguiente" onClick={() => setI((n) => (n + 1) % SLIDES.length)}>
-            ›
-          </button>
-        </span>
+
+      <div className="auth-promo-cuerpo">
+        <p className="auth-kicker auth-kicker-claro">Mientras vos atendés</p>
+        <h2 className="auth-titular">
+          Son las 23:41 y tu comercio <span>acaba de agendar un turno</span>
+        </h2>
+
+        <div className="auth-chat" aria-label="Ejemplo de una charla por WhatsApp">
+          <div className="auth-chat-head">
+            <span className="auth-chat-avatar">PL</span>
+            <span>
+              <strong>Peluquería Luna</strong>
+              <small>Responde la IA de Orbita</small>
+            </span>
+          </div>
+          {CHARLA.map((m) => (
+            <p key={m.texto} className={`auth-burbuja auth-burbuja-${m.de}`}>
+              {m.texto}
+              <small>{m.hora}</small>
+            </p>
+          ))}
+          <p className="auth-chat-agenda">Turno agendado · mañana 17:30 · Corte</p>
+        </div>
       </div>
+
+      <article className="auth-plan">
+        <div className="auth-plan-head">
+          <span>
+            <span className="auth-plan-tag">El más elegido</span>
+            <h3>Plan Turnos</h3>
+          </span>
+          {turnos && (
+            <p className="auth-plan-precio">
+              {pesos(turnos.precioMercadoPago)}
+              <small>/mes</small>
+            </p>
+          )}
+        </div>
+        <ul className="auth-plan-lista">
+          <li>Responde y agenda en WhatsApp, Instagram y TikTok</li>
+          <li>Solo ofrece horarios libres dentro de los que vos marcás</li>
+          <li>Manda recordatorios para que no falten</li>
+          <li>Te pasa la charla cuando hace falta una persona</li>
+        </ul>
+        {turnos && (
+          <p className="auth-plan-cuenta">
+            Si un turno vale {pesos(PRECIO_TURNO_EJEMPLO)}, con {Math.ceil(turnos.precioMercadoPago / PRECIO_TURNO_EJEMPLO)} turnos al mes
+            el plan se paga solo.
+          </p>
+        )}
+      </article>
     </aside>
   );
 }
@@ -178,7 +179,7 @@ export function Registro() {
     nombre: '',
     email: '',
     password: '',
-    planId: (params.get('plan') as PlanId | null) ?? 'turnos',
+    planId: (params.get('plan') as PlanId | null) ?? ('' as PlanId | ''),
     medio: 'mercadopago' as const,
   });
   const [terminos, setTerminos] = useState(false);
@@ -190,7 +191,7 @@ export function Registro() {
     mutationFn: () =>
       api<{ token: string }>('/cuenta/registro', {
         method: 'POST',
-        body: { ...form, aceptaTerminos: terminos, aceptaPrivacidad: privacidad },
+        body: { ...form, planId: form.planId || undefined, aceptaTerminos: terminos, aceptaPrivacidad: privacidad },
       }),
     onSuccess: ({ token }) => {
       sesionCliente.set(token);
@@ -206,7 +207,7 @@ export function Registro() {
           negocio: form.negocio,
           rubro: form.rubro,
           nombre: form.nombre,
-          planId: form.planId,
+          planId: form.planId || undefined,
           aceptaTerminos: true,
           aceptaPrivacidad: true,
         },
@@ -229,7 +230,8 @@ export function Registro() {
         <label>
           Plan
           <span className="auth-control">
-            <select aria-label="Plan" value={form.planId} onChange={(e) => set({ planId: e.target.value as PlanId })}>
+            <select aria-label="Plan" value={form.planId} onChange={(e) => set({ planId: e.target.value as PlanId | '' })}>
+              <option value="">Sin plan, lo elijo después</option>
               {planes.data?.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.nombre} · {pesos(p.precioMercadoPago)}/mes

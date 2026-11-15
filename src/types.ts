@@ -168,6 +168,7 @@ export interface Cuenta {
     topes: { dia: number; semana: number; mes: number };
   };
   plan: Plan;
+  planElegido: boolean;
   canales: Canal[];
   manychat: { pageId: string | null; appTokenMask: string | null; apiKey: string; entrada: string; salida: string };
   suscripcion: {

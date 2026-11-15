@@ -103,13 +103,22 @@ export function Inicio() {
         <div className="narrow-center">
           <Section title={`¡Bienvenido a Orbita, ${cuenta.usuario?.nombre.split(' ')[0] ?? ''}!`}>
             <p>
-              Tu cuenta del plan <strong>{cuenta.plan.nombre}</strong> ya está creada. Podés recorrer Mi IA, la conexión, el simulador y la agenda.
+              {cuenta.planElegido ? (
+                <>
+                  Tu cuenta del plan <strong>{cuenta.plan.nombre}</strong> ya está creada.
+                </>
+              ) : (
+                'Tu cuenta ya está creada.'
+              )}{' '}
+              Podés recorrer Mi IA, la conexión, el simulador y la agenda.
               Hasta que pagues con Mercado Pago, esas pantallas se ven pero no guardan cambios ni responden mensajes.
             </p>
             <PagoBloque cuenta={cuenta} />
-            <p className="small muted">
-              ¿Querés otro plan? Cambialo en <Link to="/cuenta/plan">Plan y pagos</Link>.
-            </p>
+            {cuenta.planElegido && (
+              <p className="small muted">
+                ¿Querés otro plan? Cambialo en <Link to="/cuenta/plan">Plan y pagos</Link>.
+              </p>
+            )}
           </Section>
         </div>
       );
@@ -357,7 +366,7 @@ export function PlanYPagos() {
           </p>
         )}
       </Section>
-      <Section title="Cambiar de plan">
+      {cuenta.planElegido && <Section title="Cambiar de plan">
         {personalizado ? (
           <p>Tu plan es Personalizado. Para cambios de alcance escribinos y lo coordinamos.</p>
         ) : (
@@ -377,7 +386,7 @@ export function PlanYPagos() {
             <ErrorMsg error={cambiar.error} />
           </>
         )}
-      </Section>
+      </Section>}
       <Section title="Historial de pagos">
         <ErrorMsg error={pagos.error} />
         {pagos.data?.length === 0 && <p className="muted">Todavía no hay pagos registrados.</p>}

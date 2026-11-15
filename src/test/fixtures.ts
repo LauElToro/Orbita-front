@@ -75,6 +75,7 @@ export function cuenta(overrides: Partial<Cuenta> = {}, plan: Plan = PLANES[1]):
       entrada: 'https://orbita.test/api/webhooks/manychat/entrada',
       salida: 'https://orbita.test/api/webhooks/manychat/salida',
     },
+    planElegido: true,
     suscripcion: { medio: 'mercadopago', estadoPago: 'al_dia', vencimiento: '2026-12-14T15:00:00.000Z', importe: plan.precioMercadoPago, mpInitPoint: null },
     transferencia: null,
     onboarding: { paso: 0, completado: null, requisitos: { pago: true, manychat: false, canal: false, prompt: false } },
