@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { beneficiosDe } from '../components/Planes';
 import { ErrorMsg } from '../components/ui';
 import type { Cuenta, Requisitos } from '../types';
-import { CanalesForm, GuiaManychat, ManychatForm, PerfilForm, Simulador, TextosForm } from './formularios';
+import { CanalesForm, GuiaCanales, GuiaWeb, PerfilForm, WebForm, Simulador, TextosForm } from './formularios';
 import { useAccionCuenta } from './useCuenta';
 
 type PasoId =
@@ -11,8 +11,8 @@ type PasoId =
   | 'negocio'
   | 'turnos'
   | 'estilo'
-  | 'manychat'
   | 'canales'
+  | 'web'
   | 'textos'
   | 'recordatorios'
   | 'probar'
@@ -46,15 +46,15 @@ const PASOS: Record<PasoId, Paso> = {
     titulo: 'Estilo y preguntas',
     intro: 'Elegí cómo habla tu IA, cuándo te pasa la charla y cargá las preguntas que más te hacen.',
   },
-  manychat: {
-    id: 'manychat',
-    titulo: 'Conectar ManyChat',
-    intro: 'Tu IA responde a través de tu cuenta de ManyChat. Primero pegá tus datos y después armá el flujo siguiendo la guía.',
-  },
   canales: {
     id: 'canales',
-    titulo: 'Canales',
-    intro: 'Indicá por qué canales te escriben. Tu IA solo responde en los canales que cargues acá.',
+    titulo: 'Conectar tus canales',
+    intro: 'Tu IA atiende directo en tu WhatsApp, Instagram o TikTok. Cargá el ID de cada cuenta y su token; abajo te contamos dónde encontrarlos.',
+  },
+  web: {
+    id: 'web',
+    titulo: 'Integración web',
+    intro: 'Opcional: sumá el chat de tu IA a tu web o tienda online (WordPress, Shopify, Tiendanube y cualquier sitio), o conectalo a tu sistema por API.',
   },
   textos: {
     id: 'textos',
@@ -82,8 +82,8 @@ export function pasosDe(cuenta: Cuenta): Paso[] {
     'negocio',
     m.includes('turnos') && 'turnos',
     'estilo',
-    'manychat',
     'canales',
+    'web',
     'textos',
     m.includes('recordatorios') && 'recordatorios',
     'probar',
@@ -95,8 +95,7 @@ export function pasosDe(cuenta: Cuenta): Paso[] {
 const REQUISITOS: { key: keyof Requisitos; label: string; paso: PasoId }[] = [
   { key: 'pago', label: 'Pago del plan acreditado', paso: 'bienvenida' },
   { key: 'prompt', label: 'Información de tu negocio', paso: 'negocio' },
-  { key: 'manychat', label: 'ManyChat conectado', paso: 'manychat' },
-  { key: 'canal', label: 'Al menos un canal cargado', paso: 'canales' },
+  { key: 'canal', label: 'Un canal conectado con su token o la integración web activa', paso: 'canales' },
 ];
 
 export function Tutorial({ cuenta: cuentaActual }: { cuenta: Cuenta }) {
@@ -150,7 +149,7 @@ export function Tutorial({ cuenta: cuentaActual }: { cuenta: Cuenta }) {
     equipo: (
       <>
         <ul className="lista-check">
-          <li>Completá los datos de tu negocio y conectá ManyChat como en cualquier plan.</li>
+          <li>Completá los datos de tu negocio y conectá tus canales como en cualquier plan.</li>
           <li>Las integraciones a medida (stock, catálogo, sistemas propios) las configura el equipo según tu propuesta.</li>
           <li>Los cambios de plan o de alcance se coordinan con el equipo, no desde el panel.</li>
         </ul>
@@ -160,17 +159,26 @@ export function Tutorial({ cuenta: cuentaActual }: { cuenta: Cuenta }) {
     negocio: <PerfilForm cuenta={cuenta} secciones={['negocio']} boton="Guardar y seguir" onGuardado={guardarYSeguir} />,
     turnos: <PerfilForm cuenta={cuenta} secciones={['turnos']} boton="Guardar y seguir" onGuardado={guardarYSeguir} />,
     estilo: <PerfilForm cuenta={cuenta} secciones={['estilo']} boton="Guardar y seguir" onGuardado={guardarYSeguir} />,
-    manychat: (
+    canales: (
       <>
-        <ManychatForm cuenta={cuenta} boton="Guardar datos de ManyChat" />
-        <h3>Armá el flujo en ManyChat</h3>
-        <GuiaManychat cuenta={cuenta} />
-        <button onClick={siguiente} disabled={!cuenta.onboarding.requisitos.manychat}>
-          Ya armé el flujo, seguir
+        <CanalesForm cuenta={cuenta} boton="Guardar y seguir" onGuardado={guardarYSeguir} />
+        <button type="button" className="link" onClick={siguiente}>
+          No uso WhatsApp, Instagram ni TikTok: seguir con la web
         </button>
+        <h3>Dónde encontrar cada dato</h3>
+        <GuiaCanales />
       </>
     ),
-    canales: <CanalesForm cuenta={cuenta} boton="Guardar y seguir" onGuardado={guardarYSeguir} />,
+    web: (
+      <>
+        <WebForm cuenta={cuenta} onGuardado={setGuardada} />
+        <button type="button" className="secondary" onClick={siguiente}>
+          {cuenta.web.clave ? 'Listo, seguir' : 'Ahora no, seguir'}
+        </button>
+        <h3>Dónde pegar el código</h3>
+        <GuiaWeb />
+      </>
+    ),
     textos: <TextosForm cuenta={cuenta} campos={['espera', 'tope', 'handoff']} boton="Guardar y seguir" onGuardado={guardarYSeguir} />,
     recordatorios: (
       <>

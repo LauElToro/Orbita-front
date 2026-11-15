@@ -277,6 +277,18 @@ button:not(.secondary):not(.link):not(.chip):hover, .button:hover { background: 
 .pago-bloque { background: #f7f7fc; border-radius: 10px; padding: 1rem 1.25rem; margin: 1rem 0; }
 .copiar { display: inline-flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; margin: 0.25rem 0; }
 .codigo { background: var(--noche); color: #e3e5ff; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.82rem; overflow-x: auto; }
+.canales { margin-bottom: 1rem; }
+.web-codigo { margin-top: 1.25rem; border-top: 1px solid var(--border); padding-top: 0.5rem; }
+.web-codigo .copiar { display: flex; gap: 0.5rem; align-items: flex-start; margin-bottom: 0.75rem; }
+.web-codigo .copiar code { flex: 1; overflow-x: auto; white-space: nowrap; background: #f4f5f9; padding: 0.5rem 0.6rem; border-radius: 6px; font-size: 0.8rem; }
+input[type='color'] { width: 4rem; height: 2.3rem; padding: 0.15rem; cursor: pointer; }
+.canal-card { border: 1px solid var(--border); border-radius: 10px; padding: 0.9rem 1rem 0.25rem; margin-bottom: 0.75rem; }
+.canal-cabecera { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
+.canal-cabecera button { margin-left: auto; }
+.guia-canales { display: grid; gap: 0.75rem; }
+.guia-canales details { border: 1px solid var(--border); border-radius: 10px; padding: 0.75rem 1rem; }
+.guia-canales summary { cursor: pointer; font-weight: 600; }
+.guia-canales ol { padding-left: 1.25rem; line-height: 1.6; margin-bottom: 0.25rem; }
 .guia { padding-left: 1.25rem; line-height: 1.6; }
 .guia li { margin-bottom: 1rem; }
 .guia .copiar { display: flex; }
@@ -290,7 +302,7 @@ button:not(.secondary):not(.link):not(.chip):hover, .button:hover { background: 
 .punto { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); }
 .punto-on { background: var(--ok); box-shadow: 0 0 0 4px rgba(31, 157, 85, 0.18); }
 
-.tutorial { display: grid; grid-template-columns: 240px 1fr; gap: 1.5rem; align-items: start; }
+.tutorial { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 1.5rem; align-items: start; }
 .tutorial-pasos { position: sticky; top: 1rem; }
 .tutorial-pasos ol { list-style: none; padding: 0; margin: 1rem 0 0; display: flex; flex-direction: column; gap: 0.15rem; }
 .tutorial-pasos li button { text-align: left; width: 100%; padding: 0.45rem 0.6rem; border-radius: 6px; color: var(--muted); }
@@ -300,7 +312,7 @@ button:not(.secondary):not(.link):not(.chip):hover, .button:hover { background: 
 .tutorial-paso h1 { margin-bottom: 0.25rem; }
 .tutorial-paso > button { margin-top: 1rem; }
 .volver { display: block; margin-top: 1.25rem; }
-@media (max-width: 860px) { .tutorial { grid-template-columns: 1fr; } .tutorial-pasos { position: static; } .tutorial-pasos ol { flex-direction: row; flex-wrap: wrap; } }
+@media (max-width: 860px) { .tutorial { grid-template-columns: minmax(0, 1fr); } .tutorial-pasos { position: static; } .tutorial-pasos ol { flex-direction: row; flex-wrap: wrap; } }
 .lista-check { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
 .lista-check li::before { content: '✓ '; color: var(--ok); font-weight: 800; }
 .lista-pasos { line-height: 1.7; }

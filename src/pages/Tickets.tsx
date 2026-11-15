@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api';
-import { CanalesEditor, canalVacio } from '../components/CanalesEditor';
+import { CanalesEditor, canalesParaEnviar, canalVacio } from '../components/CanalesEditor';
 import { Badge, ErrorMsg, Section } from '../components/ui';
 import { ESTADO_TICKET, fecha, pesos } from '../format';
 import type { Canal, Ficha, Ticket, TicketEstado, TicketTipo } from '../types';
@@ -170,13 +170,11 @@ function ConvertirTicket({ ticket }: { ticket: Ticket }) {
     clientId: slug(ticket.empresa),
     nombre: ticket.empresa,
     medio: 'mercadopago' as const,
-    pageId: '',
-    appToken: '',
     prompt: '',
     canales: [canalVacio()] as Canal[],
   });
   const convertir = useMutation({
-    mutationFn: () => api<Ficha>(`/tickets/${ticket.id}/convertir`, { method: 'POST', body: form }),
+    mutationFn: () => api<Ficha>(`/tickets/${ticket.id}/convertir`, { method: 'POST', body: { ...form, canales: canalesParaEnviar(form.canales) } }),
     onSuccess: (ficha) => {
       void qc.invalidateQueries({ queryKey: ['tickets'] });
       void qc.invalidateQueries({ queryKey: ['clientes'] });
@@ -200,14 +198,6 @@ function ConvertirTicket({ ticket }: { ticket: Ticket }) {
           <label>
             clientId
             <input value={form.clientId} onChange={(e) => set({ clientId: e.target.value })} required />
-          </label>
-          <label>
-            pageId de ManyChat
-            <input value={form.pageId} onChange={(e) => set({ pageId: e.target.value })} required />
-          </label>
-          <label>
-            appToken de ManyChat
-            <input type="password" value={form.appToken} onChange={(e) => set({ appToken: e.target.value })} required />
           </label>
         </div>
         <CanalesEditor value={form.canales} max={5} onChange={(canales) => set({ canales })} />

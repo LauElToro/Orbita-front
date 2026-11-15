@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { api } from '../api';
-import { CanalesEditor, canalVacio } from '../components/CanalesEditor';
+import { CanalesEditor, canalesParaEnviar, canalVacio } from '../components/CanalesEditor';
 import { Copiar, ErrorMsg } from '../components/ui';
 import { pesos } from '../format';
 import type { Canal, Cuenta, Mensajes, Perfil, Plan, PlanId, Simulacion, Tono } from '../types';
@@ -239,106 +239,232 @@ export function TextosForm({ cuenta, campos, boton = 'Guardar textos', onGuardad
   );
 }
 
-export function GuiaManychat({ cuenta }: { cuenta: Cuenta }) {
-  const mc = cuenta.manychat;
-  const cuerpo = JSON.stringify(
-    {
-      pageId: mc.pageId ?? 'TU_PAGE_ID',
-      subscriberId: '{{user_id}}',
-      endpointId: 'ID_DEL_CANAL',
-      texto: '{{last_input_text}}',
-      nombre: '{{first_name}}',
-    },
-    null,
-    2,
-  );
+export function GuiaCanales() {
   return (
-    <ol className="guia">
-      <li>
-        En ManyChat creá un flujo nuevo llamado <strong>Orbita</strong> y usalo como <em>Default Reply</em> (respuesta a cualquier mensaje).
-      </li>
-      <li>
-        Agregá una acción <strong>External Request</strong> con método <code>POST</code> a:
-        <Copiar texto={mc.entrada} />
-        En <em>Headers</em> agregá <code>X-Orbita-Key</code> con este valor:
-        <Copiar texto={mc.apiKey} />
-        En <em>Body</em> pegá este JSON (los campos entre llaves se insertan desde el selector de ManyChat):
-        <pre className="codigo">{cuerpo}</pre>
-        En <em>Response mapping</em> guardá <code>$.messageId</code>, <code>$.estado</code> y <code>$.texto</code> en campos personalizados.
-      </li>
-      <li>
-        Si <code>estado</code> es <code>listo</code>, enviá el <code>texto</code>. Si es <code>pendiente</code>, agregá otro External Request con
-        método <code>GET</code> a la salida, con el mismo header:
-        <Copiar texto={`${mc.salida}?messageId={{messageId}}`} />y enviá el <code>texto</code> que devuelve. Si vuelve pendiente, esperá unos
-        segundos y repetí hasta 3 veces.
-      </li>
-      <li>
-        Si la respuesta trae <code>handoff: true</code>, además de enviar el texto, asigná la conversación a una persona en el Live Chat.
-      </li>
-    </ol>
+    <div className="guia-canales">
+      <p className="small muted">
+        Tu IA responde directo desde tu cuenta, sin apps intermedias. Para cada canal necesitás dos datos: el ID de la cuenta que recibe los
+        mensajes y un token de acceso que la autoriza a contestar. Los webhooks ya están configurados del lado de Orbita.
+      </p>
+      <details>
+        <summary>WhatsApp</summary>
+        <ol>
+          <li>
+            Tu número tiene que estar en la <strong>API de WhatsApp Business (Cloud API)</strong>, dentro de una cuenta de Meta Business verificada.
+          </li>
+          <li>
+            El ID es el <strong>Identificador del número de teléfono</strong>: aparece en Meta for Developers → WhatsApp → Configuración de la
+            API, al lado de tu número. No es el número en sí.
+          </li>
+          <li>
+            El token es uno <strong>permanente</strong> de un usuario del sistema (Configuración del negocio → Usuarios del sistema → Generar
+            token) con los permisos <code>whatsapp_business_messaging</code> y <code>whatsapp_business_management</code>.
+          </li>
+          <li>Meta cobra los mensajes que inicia el negocio fuera de las 24 horas desde el último mensaje del cliente.</li>
+        </ol>
+      </details>
+      <details>
+        <summary>Instagram</summary>
+        <ol>
+          <li>La cuenta tiene que ser profesional (empresa o creador).</li>
+          <li>
+            En la app de Instagram activá <strong>Configuración → Mensajes y respuestas → Herramientas conectadas → Permitir acceso a los
+            mensajes</strong>.
+          </li>
+          <li>
+            El ID y el token salen de autorizar la app de Orbita con <strong>Iniciar sesión con Instagram</strong>, con el permiso{' '}
+            <code>instagram_business_manage_messages</code>.
+          </li>
+          <li>Instagram solo deja responder dentro de las 24 horas desde el último mensaje del cliente.</li>
+        </ol>
+      </details>
+      <details>
+        <summary>TikTok</summary>
+        <ol>
+          <li>La cuenta tiene que ser de empresa (TikTok Business) y tener los mensajes directos habilitados.</li>
+          <li>
+            El ID (<code>business_id</code>) y el token salen de autorizar la app de Orbita en TikTok for Business con el permiso de mensajes.
+          </li>
+          <li>El token de TikTok vence rápido: si tu IA deja de contestar ahí, pegá uno nuevo.</li>
+          <li>TikTok permite hasta 10 respuestas por conversación cada 48 horas desde el último mensaje del cliente.</li>
+        </ol>
+      </details>
+      <p className="small muted">¿Te trabaste? Escribinos y conectamos la cuenta con vos.</p>
+    </div>
   );
 }
 
-export function ManychatForm({ cuenta, boton = 'Conectar', onGuardado }: FormProps) {
-  const [pageId, setPageId] = useState(cuenta.manychat.pageId ?? '');
-  const [appToken, setAppToken] = useState('');
-  const guardar = useAccionCuenta((c) => {
-    setAppToken('');
-    onGuardado?.(c);
-  });
-  const conectado = Boolean(cuenta.manychat.appTokenMask);
+export function WebForm({ cuenta, boton = 'Guardar integración web', onGuardado }: FormProps) {
+  const w = cuenta.web;
+  const [activa, setActiva] = useState(w.activa || !w.clave);
+  const [origenes, setOrigenes] = useState(w.origenes.join('\n'));
+  const [bienvenida, setBienvenida] = useState(w.bienvenida ?? '');
+  const [color, setColor] = useState(w.color ?? '#5b4cf0');
+  const guardar = useAccionCuenta(onGuardado);
+  const rotar = useAccionCuenta();
   const enviar = (e: FormEvent) => {
     e.preventDefault();
-    guardar.mutate({ path: 'manychat', method: 'PUT', body: { pageId, appToken } });
+    guardar.mutate({
+      path: 'web',
+      method: 'PUT',
+      body: {
+        activa,
+        origenes: origenes.split(/[\s,]+/).filter(Boolean),
+        bienvenida: bienvenida.trim() || undefined,
+        color,
+      },
+    });
   };
   return (
     <form onSubmit={enviar}>
       <p className="small muted">
-        En ManyChat andá a <strong>Settings → API</strong> y generá un token. El Page ID aparece en <strong>Settings → General</strong> (o en la
-        dirección del navegador, después de <code>/fb</code>).
+        Sumá un chat con tu IA a tu web, tienda o cualquier sistema. Pegás una línea de código y listo; también podés llamar a la API
+        directo desde tu servidor. No cuenta como canal de tu plan.
       </p>
+      <label className="check">
+        <input type="checkbox" checked={activa} onChange={(e) => setActiva(e.target.checked)} /> Integración web activa
+      </label>
       <div className="grid2">
         <label>
-          Page ID de ManyChat
-          <input value={pageId} onChange={(e) => setPageId(e.target.value)} required />
-        </label>
-        <label>
-          Token de la API de ManyChat
-          <input
-            type="password"
-            value={appToken}
-            onChange={(e) => setAppToken(e.target.value)}
-            placeholder={conectado ? `Guardado (${cuenta.manychat.appTokenMask})` : ''}
-            required={!conectado}
-            minLength={10}
+          Dominios permitidos
+          <textarea
+            rows={3}
+            value={origenes}
+            onChange={(e) => setOrigenes(e.target.value)}
+            placeholder={'mitienda.com\nmitienda.mitiendanube.com'}
           />
-          <small className="muted">Lo guardamos cifrado. Nunca se muestra completo.</small>
+          <small className="muted">Uno por línea. Incluye los subdominios. Si lo dejás vacío, funciona en cualquier sitio.</small>
         </label>
+        <div>
+          <label>
+            Mensaje de bienvenida
+            <input value={bienvenida} onChange={(e) => setBienvenida(e.target.value)} maxLength={300} placeholder={`¡Hola! Soy el asistente de ${cuenta.negocio.nombre}. ¿En qué te ayudo?`} />
+          </label>
+          <label>
+            Color del chat
+            <input type="color" value={color} onChange={(e) => setColor(e.target.value)} aria-label="Color del chat" />
+          </label>
+        </div>
       </div>
       <ErrorMsg error={guardar.error} />
       <div className="form-acciones">
-        <button type="submit" disabled={guardar.isPending || (!appToken && !conectado)}>
-          {boton}
+        <button type="submit" disabled={guardar.isPending}>
+          {guardar.isPending ? 'Guardando...' : boton}
         </button>
-        {conectado && <span className="badge badge-ok">Conectado</span>}
+        {w.clave && <span className={`badge ${w.activa ? 'badge-ok' : 'badge-muted'}`}>{w.activa ? 'Activa' : 'Desactivada'}</span>}
       </div>
+      {w.clave && w.script && w.endpoint && (
+        <div className="web-codigo">
+          <h3>Código para tu web</h3>
+          <p className="small muted">Pegalo antes de cerrar la etiqueta &lt;/body&gt;, en todas las páginas donde quieras el chat.</p>
+          <Copiar texto={w.script} />
+          <h3>API directa</h3>
+          <p className="small muted">Para integrarlo en tu propio sistema, app o servidor:</p>
+          <Copiar texto={`POST ${w.endpoint}`} />
+          <pre className="codigo">{`curl -X POST ${w.endpoint} \\
+  -H "Content-Type: application/json" \\
+  -d '{"sesion":"cliente-123456","texto":"¿Tienen envío a domicilio?","nombre":"Ana"}'
+
+→ { "texto": "...", "handoff": false, "estado": "respondido" }`}</pre>
+          <p className="small muted">
+            <code>sesion</code> identifica a cada persona (de 8 a 64 letras, números, guiones o guiones bajos): con la misma sesión la
+            IA recuerda la charla. Si <code>handoff</code> es <code>true</code>, pedile un contacto y mandalo a{' '}
+            <code>{w.endpoint.replace(/\/mensajes$/, '/contacto')}</code> con <code>{'{"sesion","contacto"}'}</code>: te llega por mail.
+          </p>
+          <button
+            type="button"
+            className="link small"
+            disabled={rotar.isPending}
+            onClick={() => confirm('La clave actual deja de funcionar al instante y vas a tener que pegar el código nuevo. ¿Seguimos?') && rotar.mutate({ path: 'web/clave' })}
+          >
+            Generar una clave nueva
+          </button>
+          <ErrorMsg error={rotar.error} />
+        </div>
+      )}
     </form>
+  );
+}
+
+export function GuiaWeb() {
+  return (
+    <div className="guia-canales">
+      <details>
+        <summary>Cualquier sitio (HTML)</summary>
+        <ol>
+          <li>Abrí la plantilla o el archivo HTML de tu sitio.</li>
+          <li>Pegá el código justo antes de <code>&lt;/body&gt;</code> y publicá.</li>
+        </ol>
+      </details>
+      <details>
+        <summary>WordPress</summary>
+        <ol>
+          <li>Instalá el plugin gratuito <strong>WPCode</strong> (o cualquiera de “insertar código en el pie”).</li>
+          <li>En <strong>Code Snippets → Header &amp; Footer</strong>, pegá el código en <em>Footer</em> y guardá.</li>
+          <li>Si usás un constructor (Elementor, Divi), también sirve su opción de código personalizado en el pie.</li>
+        </ol>
+      </details>
+      <details>
+        <summary>Shopify</summary>
+        <ol>
+          <li>
+            Entrá a <strong>Tienda online → Temas</strong>, en tu tema tocá <strong>⋯ → Editar código</strong>.
+          </li>
+          <li>
+            Abrí <code>layout/theme.liquid</code>, pegá el código antes de <code>&lt;/body&gt;</code> y guardá.
+          </li>
+        </ol>
+      </details>
+      <details>
+        <summary>Tiendanube</summary>
+        <ol>
+          <li>
+            En el administrador buscá la sección de <strong>códigos externos</strong> o scripts de tu tienda y pegá el código para todas las
+            páginas.
+          </li>
+          <li>Si tu plan no permite códigos propios, cargalo con Google Tag Manager (abajo).</li>
+          <li>Sumá en “Dominios permitidos” tu dominio y el de Tiendanube (por ejemplo, <code>mitienda.mitiendanube.com</code>).</li>
+        </ol>
+      </details>
+      <details>
+        <summary>Wix, Squarespace y otros</summary>
+        <ol>
+          <li>
+            En Wix: <strong>Configuración → Código personalizado → Agregar código</strong>, ubicación <em>Body - final</em>, en todas las páginas.
+          </li>
+          <li>En otros constructores buscá “código personalizado”, “inyección de código” o “scripts del pie”.</li>
+        </ol>
+      </details>
+      <details>
+        <summary>Google Tag Manager</summary>
+        <ol>
+          <li>Creá una etiqueta <strong>HTML personalizado</strong> con el código.</li>
+          <li>Activador: <strong>All Pages</strong>. Publicá el contenedor.</li>
+        </ol>
+      </details>
+      <p className="small muted">
+        Opcional en el código: <code>data-posicion="izquierda"</code> mueve la burbuja y <code>data-abierto="true"</code> la abre al cargar.
+        Desde tu web podés usar <code>Orbita.abrir()</code> o <code>Orbita.enviar('texto')</code> en un botón propio.
+      </p>
+    </div>
   );
 }
 
 export function CanalesForm({ cuenta, boton = 'Guardar canales', onGuardado }: FormProps) {
   const [canales, setCanales] = useState<Canal[]>(cuenta.canales.length ? cuenta.canales : [canalVacio()]);
-  const guardar = useAccionCuenta(onGuardado);
+  const guardar = useAccionCuenta((c) => {
+    setCanales(c.canales.length ? c.canales : [canalVacio()]);
+    onGuardado?.(c);
+  });
   const enviar = (e: FormEvent) => {
     e.preventDefault();
-    guardar.mutate({ path: 'canales', method: 'PUT', body: { canales } });
+    guardar.mutate({ path: 'canales', method: 'PUT', body: { canales: canalesParaEnviar(canales) } });
   };
   return (
     <form onSubmit={enviar}>
       <p className="small muted">
-        El ID del canal es el que ManyChat manda en cada mensaje: en WhatsApp el <em>phone number ID</em>, en Instagram el <em>page ID</em> y en
-        TikTok el identificador de la cuenta. Tu plan {cuenta.plan.nombre} admite {cuenta.plan.maxCanales}{' '}
-        {cuenta.plan.maxCanales === 1 ? 'canal' : 'canales'}.
+        Tu plan {cuenta.plan.nombre} admite {cuenta.plan.maxCanales} {cuenta.plan.maxCanales === 1 ? 'canal' : 'canales'}. Los tokens se guardan
+        cifrados y nunca se muestran completos.
       </p>
       <CanalesEditor value={canales} max={cuenta.plan.maxCanales} onChange={setCanales} />
       <ErrorMsg error={guardar.error} />

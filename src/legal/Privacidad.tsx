@@ -39,7 +39,7 @@ export function Privacidad() {
             <strong>De quienes nos consultan:</strong> los datos que completan en los formularios de contacto o de arrepentimiento.
           </li>
           <li>
-            <strong>De los Contactos (como encargado):</strong> identificador asignado por ManyChat, nombre de perfil, contenido de los mensajes
+            <strong>De los Contactos (como encargado):</strong> identificador que asigna la plataforma de mensajería (en WhatsApp, el número de teléfono), nombre de perfil, contenido de los mensajes
             y, si corresponde, los turnos reservados.
           </li>
         </ul>
@@ -75,7 +75,7 @@ export function Privacidad() {
         <ul>
           <li>infraestructura y alojamiento de servidores;</li>
           <li>proveedores de modelos de inteligencia artificial, que reciben el contenido necesario para generar cada respuesta;</li>
-          <li>ManyChat y las plataformas de mensajería conectadas por el Cliente;</li>
+          <li>las plataformas de mensajería conectadas por el Cliente (Meta para WhatsApp e Instagram, y TikTok);</li>
           <li>Mercado Pago, para el cobro de los abonos;</li>
           <li>autoridades, cuando lo exija una ley o una orden judicial.</li>
         </ul>

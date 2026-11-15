@@ -33,7 +33,7 @@ export function Terminos() {
             atendidas por el asistente.
           </li>
           <li>
-            <strong>Plataformas de terceros:</strong> ManyChat, Meta (WhatsApp e Instagram), TikTok, los proveedores de modelos de
+            <strong>Plataformas de terceros:</strong> Meta (WhatsApp e Instagram), TikTok, los proveedores de modelos de
             inteligencia artificial, Mercado Pago y cualquier otro servicio externo del que depende el Servicio.
           </li>
           <li>
@@ -45,7 +45,7 @@ export function Terminos() {
         <h2>3. Qué es el Servicio</h2>
         <p>
           Orbita es una herramienta de software que genera respuestas automáticas mediante inteligencia artificial a partir del Contenido del
-          Cliente y las entrega a través de su cuenta de ManyChat. Según el plan, puede además registrar turnos y enviar recordatorios.
+          Cliente y las entrega a través de las cuentas de WhatsApp, Instagram o TikTok que el Cliente conecta. Según el plan, puede además registrar turnos y enviar recordatorios.
         </p>
         <p>
           Orbita <strong>no es parte</strong> de las conversaciones ni de las relaciones comerciales entre el Cliente y sus Contactos: no vende,
@@ -54,9 +54,10 @@ export function Terminos() {
 
         <h2>4. Requisitos y cuenta</h2>
         <p>
-          Para usar el Servicio el Cliente necesita una cuenta propia y activa de ManyChat y de los canales que quiera conectar, cuyos costos y
-          condiciones son ajenos a Orbita. El Cliente es responsable de la veracidad de los datos de registro, de la confidencialidad de su
-          contraseña y de las credenciales de ManyChat que cargue, y de toda actividad realizada desde su cuenta. Debe avisar de inmediato a
+          Para usar el Servicio el Cliente necesita cuentas propias y activas en los canales que quiera conectar (por ejemplo, WhatsApp Business
+          Platform, una cuenta profesional de Instagram o una cuenta Business de TikTok), cuyos costos, incluidos los cargos por mensaje que
+          cobre Meta, y condiciones son ajenos a Orbita. El Cliente es responsable de la veracidad de los datos de registro, de la
+          confidencialidad de su contraseña y de los tokens de acceso que cargue, y de toda actividad realizada desde su cuenta. Debe avisar de inmediato a
           Orbita ante cualquier uso no autorizado.
         </p>
 
@@ -100,7 +101,7 @@ export function Terminos() {
           <li>intentar vulnerar, sobrecargar, copiar o hacer ingeniería inversa del Servicio.</li>
         </ul>
         <p>
-          El Cliente debe cumplir en todo momento las condiciones y políticas de ManyChat, Meta (incluidas las políticas de WhatsApp Business)
+          El Cliente debe cumplir en todo momento las condiciones y políticas de Meta (incluidas las políticas de WhatsApp Business)
           y TikTok. Ante un incumplimiento o un riesgo para el Servicio, Orbita puede suspender el Servicio de inmediato y sin previo aviso,
           sin que ello genere derecho a reintegro ni indemnización.
         </p>

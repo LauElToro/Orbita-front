@@ -15,7 +15,7 @@ const BENEFICIOS = [
 const PASOS = [
   { titulo: 'Creás tu cuenta', texto: 'Te registrás en dos minutos y recorrés el panel. La IA se habilita cuando pagás con Mercado Pago.' },
   { titulo: 'Le contás de tu negocio', texto: 'Un tutorial guiado te pregunta lo que tu IA necesita saber. Sin escribir prompts.' },
-  { titulo: 'Conectás ManyChat', texto: 'Te mostramos paso a paso dónde pegar cada dato. Funciona con WhatsApp, Instagram y TikTok.' },
+  { titulo: 'Conectás tus canales', texto: 'Tu WhatsApp, Instagram o TikTok, directo y sin apps intermedias. Te mostramos dónde está cada dato.' },
   { titulo: 'Probás y activás', texto: 'Chateás con tu IA en el simulador y, cuando te convence, la activás con un clic.' },
 ];
 
@@ -33,7 +33,7 @@ const PREGUNTAS = [
   },
   {
     p: '¿Qué necesito para conectarla?',
-    r: 'Una cuenta de ManyChat con tu WhatsApp, Instagram o TikTok conectado. En el tutorial te mostramos exactamente qué configurar.',
+    r: 'Tu WhatsApp Business (API de Meta), una cuenta profesional de Instagram o una cuenta Business de TikTok. En el tutorial te mostramos qué dato va en cada lugar, y si te trabás lo conectamos con vos.',
   },
   {
     p: '¿Qué pasa si la IA no sabe algo?',
@@ -100,7 +100,7 @@ export function Landing() {
       </section>
 
       <section className="canales-strip">
-        <span>Se conecta mediante ManyChat con</span>
+        <span>Se conecta directo con</span>
         <strong>WhatsApp</strong>
         <strong>Instagram</strong>
         <strong>TikTok</strong>

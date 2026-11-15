@@ -73,9 +73,8 @@ describe('panel del equipo', () => {
     await userEvent.selectOptions(screen.getByLabelText('Plan'), 'turnos');
     expect(screen.getByText(/84\.000/)).toBeInTheDocument();
 
-    await userEvent.type(screen.getByLabelText('pageId de ManyChat'), '123');
-    await userEvent.type(screen.getByLabelText('appToken de ManyChat'), 'tok');
     await userEvent.type(screen.getByLabelText('endpointId canal 1'), '54911');
+    await userEvent.type(screen.getByLabelText('Token canal 1'), 'whatsapp-token-largo');
     await userEvent.type(screen.getByLabelText('Etiqueta canal 1'), 'WhatsApp');
     await userEvent.click(screen.getByRole('button', { name: /Agregar canal/ }));
     expect(screen.getByRole('button', { name: /Agregar canal \(2\/2\)/ })).toBeDisabled();
@@ -83,7 +82,8 @@ describe('panel del equipo', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Crear cliente' }));
 
     expect(await screen.findByRole('heading', { name: 'Pizzería Norte' })).toBeInTheDocument();
-    expect(enviado).toMatchObject({ clientId: 'pizzeria-norte', planId: 'turnos', medio: 'mercadopago', canales: [{ endpointId: '54911' }] });
+    expect(enviado).toMatchObject({ clientId: 'pizzeria-norte', planId: 'turnos', medio: 'mercadopago', canales: [{ endpointId: '54911', token: 'whatsapp-token-largo' }] });
+    expect(enviado).not.toHaveProperty('pageId');
   });
 
   it('la ficha muestra los bloques y ejecuta acciones', async () => {
@@ -106,8 +106,10 @@ describe('panel del equipo', () => {
     });
     renderApp('/admin/clientes/pizzeria-norte');
 
-    expect(await screen.findByText('key-abc')).toBeInTheDocument();
-    expect(screen.getByText('****oken')).toBeInTheDocument();
+    expect(await screen.findByText('Conectado')).toBeInTheDocument();
+    expect(screen.getByLabelText('Token canal 1')).toHaveAttribute('placeholder', expect.stringContaining('****oken'));
+    expect(screen.getByText(/\/api\/webhooks\/meta$/)).toBeInTheDocument();
+    expect(screen.queryByText(/manychat/i)).not.toBeInTheDocument();
     expect(await screen.findByText('Ana')).toBeInTheDocument();
     expect(screen.getByText('enviado')).toBeInTheDocument();
     expect(await screen.findByLabelText('Este mes')).toHaveAttribute('aria-valuenow', '100');
@@ -125,13 +127,11 @@ describe('panel del equipo', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Cambiar plan' }));
     await userEvent.click(screen.getByRole('button', { name: 'Guardar textos' }));
     await userEvent.click(screen.getByRole('button', { name: 'Guardar canales' }));
-    await userEvent.type(screen.getByLabelText('Nuevo appToken'), 'nuevo');
-    await userEvent.click(screen.getByRole('button', { name: 'Reemplazar' }));
 
     await waitFor(() => {
       const llamadas = fetch.mock.calls.map(([u, i]) => `${i?.method ?? 'GET'} ${String(u)}`);
       expect(llamadas).not.toContain('POST /api/clientes/pizzeria-norte/transferencia');
-      expect(llamadas.filter((l) => l === 'PATCH /api/clientes/pizzeria-norte')).toHaveLength(4);
+      expect(llamadas.filter((l) => l === 'PATCH /api/clientes/pizzeria-norte')).toHaveLength(3);
     });
   });
 
@@ -158,14 +158,14 @@ describe('panel del equipo', () => {
 
     const form = screen.getByRole('heading', { name: /Contratar: plan Personalizado/ }).closest('form')!;
     expect(within(form).getByLabelText('clientId')).toHaveValue('ferreteria-sur');
-    await userEvent.type(within(form).getByLabelText('pageId de ManyChat'), '777');
-    await userEvent.type(within(form).getByLabelText('appToken de ManyChat'), 'tok');
     await userEvent.type(within(form).getByLabelText('endpointId canal 1'), 'ig-1');
+    await userEvent.type(within(form).getByLabelText('Token canal 1'), 'instagram-token-largo');
     await userEvent.type(within(form).getByLabelText('Etiqueta canal 1'), 'Instagram');
     await userEvent.click(within(form).getByRole('button', { name: 'Crear ficha' }));
 
     expect(await screen.findByRole('heading', { name: 'Ferretería Sur' })).toBeInTheDocument();
-    expect(convertido).toMatchObject({ clientId: 'ferreteria-sur', pageId: '777', canales: [{ endpointId: 'ig-1' }] });
+    expect(convertido).toMatchObject({ clientId: 'ferreteria-sur', canales: [{ endpointId: 'ig-1', token: 'instagram-token-largo' }] });
+    expect(convertido).not.toHaveProperty('pageId');
   });
 });
 

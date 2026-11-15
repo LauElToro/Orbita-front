@@ -38,8 +38,8 @@ Los pasos dependen del plan:
 | Tu negocio | sí | sí | sí | sí |
 | Turnos (servicios, horarios, duración, anticipación) | | sí | sí | sí |
 | Estilo y preguntas frecuentes | sí | sí | sí | sí |
-| Conectar ManyChat (datos y guía del flujo) | sí | sí | sí | sí |
-| Canales (hasta el máximo del plan) | sí | sí | sí | sí |
+| Conectar tus canales (ID y token por canal, hasta el máximo del plan, con la guía de cada plataforma) | sí | sí | sí | sí |
+| Integración web (opcional; quien no usa redes puede saltear los canales y venir directo acá) | sí | sí | sí | sí |
 | Mensajes fijos | sí | sí | sí | sí |
 | Recordatorios | | | sí | sí |
 | Probá tu IA (simulador) | sí | sí | sí | sí |
@@ -48,7 +48,7 @@ Cada paso guarda en el backend y avanza. El progreso se guarda, así que se pued
 ### Secciones
 - **Mi IA** (`/cuenta/ia`): información del negocio, mensajes fijos e instrucciones avanzadas (el prompt, editable a mano).
 - **Probar** (`/cuenta/probar`): el simulador, con mensajes sugeridos según el plan. No envía nada ni consume el plan.
-- **Conexión** (`/cuenta/conexion`): datos de ManyChat, canales y la guía del flujo con la URL de entrada, la de salida y la `X-Orbita-Key` para copiar.
+- **Conexión** (`/cuenta/conexion`): canales con su ID y token (el token se guarda cifrado; se ve "Conectado" y una máscara, y si se deja vacío se conserva el anterior) y la guía de dónde sacar cada dato en WhatsApp, Instagram y TikTok. Debajo, **Integración web**: prenderla, dominios permitidos, mensaje de bienvenida y color; con la clave generada muestra el `<script>` para copiar, el endpoint de la API con un ejemplo `curl`, el botón para generar una clave nueva y la guía de dónde pegar el código (HTML, WordPress, Shopify, Tiendanube, Wix y otros, Google Tag Manager).
 - **Agenda** (`/cuenta/agenda`): turnos, solo en planes con turnos.
 - **Plan y pagos** (`/cuenta/plan`): pago, cambio de plan o de medio (Personalizado se coordina con el equipo) e historial de pagos.
 - **Ajustes** (`/cuenta/ajustes`): datos de la cuenta, cambio de contraseña, links legales y cómo darse de baja.
@@ -58,9 +58,9 @@ Tarjetas de MRR, cobrado en 30 días, MRR en riesgo, clientes activos, respuesta
 ### Clientes (`/admin/clientes`)
 Una fila por cliente: nombre, plan, canales, estado del bot (marca los que están en onboarding) y estado del pago.
 ### Alta (`/admin/clientes/nuevo`)
-Igual que antes: nombre y `clientId`, plan (sin Personalizado), medio, canales, datos de ManyChat, email y prompt. Muestra el precio según el medio.
+Igual que antes: nombre y `clientId`, plan (sin Personalizado), medio, canales con su token, email y prompt. Muestra el precio según el medio.
 ### Ficha (`/admin/clientes/:id`)
-Estado, **cuenta del cliente**, plan, uso, canales, prompt, textos fijos, agenda e integración con ManyChat. En la cuenta del cliente se ve el usuario, el alta y el último ingreso, con un botón para generar el link de restablecimiento. Si la ficha no tiene usuario (alta del equipo o ticket), se lo invita con email y nombre y se obtiene el link para que elija contraseña.
+Estado, **cuenta del cliente**, plan, uso, canales, prompt, textos fijos, agenda y página del cliente. Los canales muestran si tienen token y las URLs de los webhooks de Meta y TikTok. En la cuenta del cliente se ve el usuario, el alta y el último ingreso, con un botón para generar el link de restablecimiento. Si la ficha no tiene usuario (alta del equipo o ticket), se lo invita con email y nombre y se obtiene el link para que elija contraseña.
 ### Tickets (`/admin/tickets`)
 Selector de tipo (IA personalizada o arrepentimientos) y filtro por estado. Los de IA personalizada se cotizan y se convierten en ficha con plan Personalizado. Los arrepentimientos se responden dentro de las 24 h y no se convierten.
 ## Datos que lee
@@ -69,7 +69,7 @@ Todas las llamadas van a `/api` (variable `VITE_API_URL` para cambiarlo).
 |---|---|
 | Landing y registro | `GET /publico/planes`, `POST /cuenta/registro` |
 | Ingreso y contraseña | `POST /cuenta/login`, `POST /cuenta/restablecer` |
-| Panel del comercio | `GET /cuenta/me`, `/uso`, `/turnos`, `/pagos`; `PUT /cuenta/perfil`, `/prompt`, `/canales`, `/manychat`; `PATCH /cuenta/plan`, `/textos`; `POST /cuenta/onboarding`, `/onboarding/completar`, `/probar`, `/pausar`, `/activar`, `/suscripcion`, `/password`, `/legal/aceptar` |
+| Panel del comercio | `GET /cuenta/me`, `/uso`, `/turnos`, `/pagos`; `PUT /cuenta/perfil`, `/prompt`, `/canales`, `/web`; `POST /cuenta/web/clave`; `PATCH /cuenta/plan`, `/textos`; `POST /cuenta/onboarding`, `/onboarding/completar`, `/probar`, `/pausar`, `/activar`, `/suscripcion`, `/password`, `/legal/aceptar` |
 | Login del equipo | `POST /auth/login` |
 | Resumen | `GET /admin/metricas` |
 | Clientes, alta y ficha | `GET /clientes`, `GET /planes`, `POST /clientes`, `GET, PATCH /clientes/:id`, `PUT /clientes/:id/prompt`, `POST /clientes/:id/pausar`, `/activar`, `/transferencia`, `/reset-password`, `/acceso`, `GET /clientes/:id/uso`, `/turnos` |

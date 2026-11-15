@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { api } from '../api';
-import { CanalesEditor } from '../components/CanalesEditor';
+import { CanalesEditor, canalesParaEnviar } from '../components/CanalesEditor';
 import { Badge, Copiar, ErrorMsg, Section, UsoBar } from '../components/ui';
 import { ESTADO_PAGO, MEDIO, fecha, pesos } from '../format';
 import type { Canal, Ficha as FichaT, Mensajes, Plan, PlanId, Turno, Uso } from '../types';
@@ -35,7 +35,7 @@ export function Ficha() {
       <BloquePrompt ficha={f} onChange={refrescar} />
       <BloqueTextos ficha={f} onChange={refrescar} />
       {f.modulos.includes('turnos') && <BloqueAgenda id={f.id} conRecordatorios={f.modulos.includes('recordatorios')} />}
-      <BloqueIntegracion ficha={f} onChange={refrescar} />
+      <BloquePagina ficha={f} />
     </>
   );
 }
@@ -208,9 +208,15 @@ function BloqueUso({ id }: { id: string }) {
 
 function BloqueCanales({ ficha, onChange }: BloqueProps) {
   const accion = useAccion(ficha.id, onChange);
-  const [canales, setCanales] = useState<Canal[]>(ficha.canales.map(({ tipo, endpointId, etiqueta }) => ({ tipo, endpointId, etiqueta })));
+  const [canales, setCanales] = useState<Canal[]>(ficha.canales);
+  const guardar = () =>
+    accion.mutate({ path: '', method: 'PATCH', body: { canales: canalesParaEnviar(canales) } }, { onSuccess: (f) => setCanales(f.canales) });
   return (
-    <Section title="Canales" actions={<button onClick={() => accion.mutate({ path: '', method: 'PATCH', body: { canales } })}>Guardar canales</button>}>
+    <Section title="Canales" actions={<button onClick={guardar}>Guardar canales</button>}>
+      <p className="muted small">
+        Webhooks de la app (se configuran una sola vez): Meta <code>{location.origin}/api/webhooks/meta</code> y TikTok{' '}
+        <code>{location.origin}/api/webhooks/tiktok</code>.
+      </p>
       <CanalesEditor value={canales} max={ficha.plan.maxCanales} onChange={setCanales} />
       <ErrorMsg error={accion.error} />
     </Section>
@@ -293,53 +299,12 @@ function BloqueAgenda({ id, conRecordatorios }: { id: string; conRecordatorios: 
   );
 }
 
-function BloqueIntegracion({ ficha, onChange }: BloqueProps) {
-  const accion = useAccion(ficha.id, onChange);
-  const [appToken, setAppToken] = useState('');
-  const base = `${location.origin}/api/webhooks/manychat`;
+function BloquePagina({ ficha }: { ficha: FichaT }) {
   return (
-    <Section title="Integración ManyChat">
-      <dl className="kv">
-        <dt>pageId</dt>
-        <dd>{ficha.pageId ?? 'sin cargar'}</dd>
-        <dt>appToken</dt>
-        <dd>{ficha.appTokenMask ?? 'sin cargar'}</dd>
-        <dt>X-Orbita-Key</dt>
-        <dd>
-          <code>{ficha.apiKey}</code>
-        </dd>
-        <dt>Entrada</dt>
-        <dd>
-          <code>POST {base}/entrada</code>
-        </dd>
-        <dt>Salida</dt>
-        <dd>
-          <code>GET {base}/salida?messageId=...</code>
-        </dd>
-        <dt>Página del cliente</dt>
-        <dd>
-          <a href={ficha.linkPublico} target="_blank" rel="noreferrer">
-            {ficha.linkPublico}
-          </a>
-        </dd>
-      </dl>
-      <div className="row">
-        <input
-          type="password"
-          aria-label="Nuevo appToken"
-          placeholder="Reemplazar appToken"
-          value={appToken}
-          onChange={(e) => setAppToken(e.target.value)}
-        />
-        <button
-          className="secondary"
-          disabled={!appToken}
-          onClick={() => accion.mutate({ path: '', method: 'PATCH', body: { appToken } }, { onSuccess: () => setAppToken('') })}
-        >
-          Reemplazar
-        </button>
-      </div>
-      <ErrorMsg error={accion.error} />
+    <Section title="Página del cliente">
+      <a href={ficha.linkPublico} target="_blank" rel="noreferrer">
+        {ficha.linkPublico}
+      </a>
     </Section>
   );
 }

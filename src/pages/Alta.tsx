@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api';
-import { CanalesEditor, canalVacio } from '../components/CanalesEditor';
+import { CanalesEditor, canalesParaEnviar, canalVacio } from '../components/CanalesEditor';
 import { ErrorMsg } from '../components/ui';
 import { pesos } from '../format';
 import type { Canal, Ficha, MedioPago, Plan, PlanId } from '../types';
@@ -13,8 +13,6 @@ export interface AltaForm {
   planId: PlanId;
   medio: MedioPago;
   canales: Canal[];
-  pageId: string;
-  appToken: string;
   prompt: string;
   emailContacto?: string;
 }
@@ -39,8 +37,6 @@ export function Alta() {
     planId: 'mensajes',
     medio: 'mercadopago',
     canales: [canalVacio()],
-    pageId: '',
-    appToken: '',
     prompt: '',
   });
   const [clientIdTocado, setClientIdTocado] = useState(false);
@@ -59,7 +55,7 @@ export function Alta() {
 
   const enviar = (e: FormEvent) => {
     e.preventDefault();
-    crear.mutate({ ...form, emailContacto: form.emailContacto || undefined });
+    crear.mutate({ ...form, canales: canalesParaEnviar(form.canales), emailContacto: form.emailContacto || undefined });
   };
 
   return (
@@ -95,14 +91,6 @@ export function Alta() {
               </option>
             ))}
           </select>
-        </label>
-        <label>
-          pageId de ManyChat
-          <input value={form.pageId} onChange={(e) => set({ pageId: e.target.value })} required />
-        </label>
-        <label>
-          appToken de ManyChat
-          <input type="password" value={form.appToken} onChange={(e) => set({ appToken: e.target.value })} required />
         </label>
         <label>
           Email del cliente (opcional)

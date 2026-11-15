@@ -40,7 +40,7 @@ export function SitioFooter() {
       <div className="site-footer-grid">
         <div>
           <Logo claro />
-          <p className="small">Asistentes con IA para comercios, conectados a WhatsApp, Instagram y TikTok a través de ManyChat.</p>
+          <p className="small">Asistentes con IA para comercios, conectados directo a WhatsApp, Instagram y TikTok.</p>
         </div>
         <div>
           <strong>Producto</strong>
@@ -63,7 +63,7 @@ export function SitioFooter() {
         </div>
       </div>
       <p className="small site-legal">
-        © {new Date().getFullYear()} {EMPRESA.razonSocial} · CUIT {EMPRESA.cuit}. ManyChat, WhatsApp, Instagram y TikTok son marcas de sus
+        © {new Date().getFullYear()} {EMPRESA.razonSocial} · CUIT {EMPRESA.cuit}. WhatsApp, Instagram y TikTok son marcas de sus
         respectivos titulares; Orbita no está afiliada ni patrocinada por ellos.
       </p>
     </footer>

@@ -13,7 +13,7 @@ const USO = {
   mes: { usado: 120, tope: 4000, reinicia: '2026-12-14' },
 };
 const conSesion = () => sesionCliente.set('jwt-cliente');
-const lista = (c: Cuenta) => ({ ...c, onboarding: { ...c.onboarding, completado: '2026-11-14T15:00:00.000Z', requisitos: { pago: true, manychat: true, canal: true, prompt: true } }, negocio: { ...c.negocio, estado: 'activo' as const, pausaMotivo: null } });
+const lista = (c: Cuenta) => ({ ...c, onboarding: { ...c.onboarding, completado: '2026-11-14T15:00:00.000Z', requisitos: { pago: true, canal: true, prompt: true } }, negocio: { ...c.negocio, estado: 'activo' as const, pausaMotivo: null } });
 
 describe('registro y acceso del cliente', () => {
   it('registra con plan preseleccionado, exige aceptar los documentos y muestra el pago', async () => {
@@ -27,7 +27,7 @@ describe('registro y acceso del cliente', () => {
       'GET /cuenta/me': cuenta({
         suscripcion: { medio: 'mercadopago', estadoPago: 'pendiente', vencimiento: '2026-11-14T15:00:00.000Z', importe: 115000, mpInitPoint: null },
         transferencia: null,
-        onboarding: { paso: 0, completado: null, requisitos: { pago: false, manychat: false, canal: false, prompt: false } },
+        onboarding: { paso: 0, completado: null, requisitos: { pago: false, canal: false, prompt: false } },
       }),
     });
     renderApp('/registro?plan=completo');
@@ -60,7 +60,7 @@ describe('registro y acceso del cliente', () => {
     let body: Record<string, unknown> = {};
     const pendiente = {
       suscripcion: { medio: 'mercadopago' as const, estadoPago: 'pendiente' as const, vencimiento: '2026-11-14T15:00:00.000Z', importe: 42000, mpInitPoint: null },
-      onboarding: { paso: 0, completado: null, requisitos: { pago: false, manychat: false, canal: false, prompt: false } },
+      onboarding: { paso: 0, completado: null, requisitos: { pago: false, canal: false, prompt: false } },
     };
     let elegido = false;
     mockApi({
@@ -165,7 +165,7 @@ describe('registro y acceso del cliente', () => {
       'GET /cuenta/me': cuenta({
         suscripcion: { medio: 'mercadopago', estadoPago: 'pendiente', vencimiento: '2026-11-14T15:00:00.000Z', importe: 84000, mpInitPoint: null },
         transferencia: null,
-        onboarding: { paso: 0, completado: null, requisitos: { pago: false, manychat: false, canal: false, prompt: false } },
+        onboarding: { paso: 0, completado: null, requisitos: { pago: false, canal: false, prompt: false } },
       }),
       'POST /cuenta/suscripcion': { initPoint: 'https://mp.test/pre' },
     });
@@ -187,7 +187,7 @@ describe('tutorial por plan', () => {
     conSesion();
     mockApi({ 'GET /cuenta/me': cuenta({}, PLANES[0]) });
     renderApp('/cuenta');
-    expect(await titulos()).toEqual(['Bienvenida', 'Tu negocio', 'Estilo y preguntas', 'Conectar ManyChat', 'Canales', 'Mensajes fijos', 'Probá tu IA', 'Activar']);
+    expect(await titulos()).toEqual(['Bienvenida', 'Tu negocio', 'Estilo y preguntas', 'Conectar tus canales', 'Integración web', 'Mensajes fijos', 'Probá tu IA', 'Activar']);
   });
 
   it('el plan Completo suma turnos y recordatorios', async () => {
@@ -244,7 +244,7 @@ describe('tutorial por plan', () => {
     await userEvent.type(screen.getByLabelText('Respuesta 1'), 'Sí, en la esquina.');
     await userEvent.click(screen.getByRole('button', { name: 'Agregar pregunta' }));
     await userEvent.click(screen.getByRole('button', { name: 'Guardar y seguir' }));
-    expect(await screen.findByRole('heading', { name: 'Conectar ManyChat' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Conectar tus canales' })).toBeInTheDocument();
 
     const perfiles = llamadas.filter((l) => l.key === 'perfil').map((l) => l.body);
     expect(perfiles[0]).toMatchObject({ descripcion: 'Peluquería de barrio con 10 años.', horarios: 'Martes a sábado' });
@@ -256,15 +256,18 @@ describe('tutorial por plan', () => {
     expect(screen.getByRole('heading', { name: 'Estilo y preguntas' })).toBeInTheDocument();
   });
 
-  it('conecta ManyChat con la guía, carga canales y textos', async () => {
+  it('conecta un canal con su token, muestra la guía y carga los textos', async () => {
     conSesion();
-    const base = cuenta({ onboarding: { paso: 4, completado: null, requisitos: { pago: true, manychat: false, canal: false, prompt: true } } });
-    const conectada = { ...base, manychat: { ...base.manychat, pageId: '555', appTokenMask: '****argo' }, onboarding: { ...base.onboarding, requisitos: { ...base.onboarding.requisitos, manychat: true } } };
+    const base = cuenta({ onboarding: { paso: 4, completado: null, requisitos: { pago: true, canal: false, prompt: true } } });
+    const conectada = {
+      ...base,
+      canales: [{ tipo: 'instagram' as const, endpointId: '1784140', etiqueta: 'Instagram', conectado: true, tokenMask: '****argo' }],
+      onboarding: { ...base.onboarding, requisitos: { ...base.onboarding.requisitos, canal: true } },
+    };
     let canales: unknown = null;
     let textos: unknown = null;
     mockApi({
       'GET /cuenta/me': base,
-      'PUT /cuenta/manychat': conectada,
       'POST /cuenta/onboarding': conectada,
       'PUT /cuenta/canales': (init: RequestInit) => {
         canales = JSON.parse(String(init.body));
@@ -276,35 +279,87 @@ describe('tutorial por plan', () => {
       },
     });
     renderApp('/cuenta');
-    expect(await screen.findByRole('heading', { name: 'Conectar ManyChat' })).toBeInTheDocument();
-    expect(screen.getByText('key-luna')).toBeInTheDocument();
-    expect(screen.getByText('https://orbita.test/api/webhooks/manychat/entrada')).toBeInTheDocument();
-    const seguir = screen.getByRole('button', { name: 'Ya armé el flujo, seguir' });
-    expect(seguir).toBeDisabled();
-    await userEvent.type(screen.getByLabelText('Page ID de ManyChat'), '555');
-    await userEvent.type(screen.getByLabelText(/Token de la API/), 'token-manychat-largo');
-    await userEvent.click(screen.getByRole('button', { name: 'Guardar datos de ManyChat' }));
-    expect(await screen.findByText('Conectado')).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Ya armé el flujo, seguir' }));
+    expect(await screen.findByRole('heading', { name: 'Conectar tus canales' })).toBeInTheDocument();
+    expect(screen.queryByText(/manychat/i)).not.toBeInTheDocument();
+    expect(screen.getByText('Sin token')).toBeInTheDocument();
+    expect(screen.getByText('WhatsApp', { selector: 'summary' })).toBeInTheDocument();
 
-    await userEvent.type(await screen.findByLabelText('endpointId canal 1'), 'ig-luna');
+    await userEvent.selectOptions(screen.getByLabelText('Tipo canal 1'), 'instagram');
+    expect(screen.getByText('ID de la cuenta de Instagram')).toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText('endpointId canal 1'), '1784140');
+    await userEvent.type(screen.getByLabelText('Token canal 1'), 'token-instagram-largo');
     await userEvent.type(screen.getByLabelText('Etiqueta canal 1'), 'Instagram');
     expect(screen.getByRole('button', { name: /Agregar canal \(1\/2\)/ })).toBeEnabled();
     await userEvent.click(screen.getByRole('button', { name: 'Guardar y seguir' }));
+    expect(await screen.findByRole('heading', { name: 'Integración web' })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Ahora no, seguir' }));
     expect(await screen.findByLabelText(/^Mensaje al pasar con una persona/)).toBeInTheDocument();
     expect(screen.queryByLabelText(/^Recordatorio de turno/)).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Guardar y seguir' }));
     await screen.findByRole('heading', { name: 'Probá tu IA' });
 
-    expect(canales).toEqual({ canales: [{ tipo: 'whatsapp', endpointId: 'ig-luna', etiqueta: 'Instagram' }] });
+    expect(canales).toEqual({ canales: [{ tipo: 'instagram', endpointId: '1784140', etiqueta: 'Instagram', token: 'token-instagram-largo' }] });
     expect(Object.keys(textos as object)).toEqual(['espera', 'tope', 'handoff']);
+  });
+
+  it('activa la integración web y muestra el código para pegar y la API', async () => {
+    conSesion();
+    const base = lista(cuenta());
+    const conWeb = {
+      ...base,
+      web: {
+        activa: true,
+        clave: 'web_clave123',
+        origenes: ['mitienda.com'],
+        bienvenida: null,
+        color: '#ff0066',
+        endpoint: 'https://orbita.test/api/web/web_clave123/mensajes',
+        script: '<script src="https://orbita.test/api/web/widget.js" data-clave="web_clave123" async></script>',
+      },
+    };
+    let body: unknown = null;
+    mockApi({
+      'GET /cuenta/me': base,
+      'PUT /cuenta/web': (init: RequestInit) => {
+        body = JSON.parse(String(init.body));
+        return { body: conWeb };
+      },
+    });
+    renderApp('/cuenta/conexion');
+    expect(await screen.findByLabelText('Integración web activa')).toBeChecked();
+    await userEvent.type(screen.getByLabelText(/^Dominios permitidos/), 'https://www.mitienda.com{enter}mitienda.mitiendanube.com');
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar integración web' }));
+    expect(await screen.findByText(conWeb.web.script)).toBeInTheDocument();
+    expect(screen.getByText(`POST ${conWeb.web.endpoint}`)).toBeInTheDocument();
+    expect(screen.getByText('Shopify', { selector: 'summary' })).toBeInTheDocument();
+    expect(body).toMatchObject({ activa: true, origenes: ['https://www.mitienda.com', 'mitienda.mitiendanube.com'], color: '#5b4cf0' });
+  });
+
+  it('editar un canal conectado sin pegar token no lo manda', async () => {
+    conSesion();
+    const c = lista(cuenta({ canales: [{ tipo: 'whatsapp', endpointId: 'PN-1', etiqueta: 'WhatsApp', conectado: true, tokenMask: '****1234' }] }));
+    let canales: unknown = null;
+    mockApi({
+      'GET /cuenta/me': c,
+      'PUT /cuenta/canales': (init: RequestInit) => {
+        canales = JSON.parse(String(init.body));
+        return { body: c };
+      },
+    });
+    renderApp('/cuenta/conexion');
+    expect(await screen.findByText('Conectado')).toBeInTheDocument();
+    expect(screen.getByLabelText('Token canal 1')).toHaveAttribute('placeholder', expect.stringContaining('****1234'));
+    await userEvent.clear(screen.getByLabelText('Etiqueta canal 1'));
+    await userEvent.type(screen.getByLabelText('Etiqueta canal 1'), 'WhatsApp del local');
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar canales' }));
+    await waitFor(() => expect(canales).toEqual({ canales: [{ tipo: 'whatsapp', endpointId: 'PN-1', etiqueta: 'WhatsApp del local' }] }));
   });
 
   it('el simulador muestra respuestas y acciones sin efectos', async () => {
     conSesion();
     let body: Record<string, unknown> = {};
     mockApi({
-      'GET /cuenta/me': cuenta({ onboarding: { paso: 7, completado: null, requisitos: { pago: true, manychat: true, canal: true, prompt: true } } }),
+      'GET /cuenta/me': cuenta({ onboarding: { paso: 7, completado: null, requisitos: { pago: true, canal: true, prompt: true } } }),
       'POST /cuenta/probar': (init: RequestInit) => {
         body = JSON.parse(String(init.body));
         return { body: { texto: '¡Listo! Te agendé.', handoff: false, acciones: ['Reservaría un turno el 2026-11-15 10:00'] } };
@@ -321,7 +376,7 @@ describe('tutorial por plan', () => {
 
   it('activa la IA cuando están todos los requisitos y muestra el resumen', async () => {
     conSesion();
-    const base = cuenta({ onboarding: { paso: 9, completado: null, requisitos: { pago: true, manychat: true, canal: false, prompt: true } } });
+    const base = cuenta({ onboarding: { paso: 9, completado: null, requisitos: { pago: true, canal: false, prompt: true } } });
     mockApi({
       'GET /cuenta/me': base,
       'POST /cuenta/onboarding/completar': lista(base),
@@ -334,12 +389,12 @@ describe('tutorial por plan', () => {
     expect(await screen.findByRole('heading', { name: 'Activar' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Activar mi IA' })).toBeDisabled();
     await userEvent.click(screen.getByRole('button', { name: 'Completar' }));
-    expect(await screen.findByRole('heading', { name: 'Canales' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Conectar tus canales' })).toBeInTheDocument();
   });
 
   it('activar con todo listo lleva al resumen con uso y turnos', async () => {
     conSesion();
-    const base = cuenta({ onboarding: { paso: 9, completado: null, requisitos: { pago: true, manychat: true, canal: true, prompt: true } } });
+    const base = cuenta({ onboarding: { paso: 9, completado: null, requisitos: { pago: true, canal: true, prompt: true } } });
     mockApi({
       'GET /cuenta/me': base,
       'POST /cuenta/onboarding/completar': lista(base),

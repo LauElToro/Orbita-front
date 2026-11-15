@@ -22,6 +22,10 @@ export interface Canal {
   tipo: CanalTipo;
   endpointId: string;
   etiqueta: string;
+  /** Solo al enviar: el backend nunca lo devuelve. */
+  token?: string;
+  conectado?: boolean;
+  tokenMask?: string | null;
 }
 
 export interface Mensajes {
@@ -54,8 +58,6 @@ export interface Ficha {
   planId: PlanId;
   plan: Plan;
   timezone: string;
-  pageId: string | null;
-  apiKey: string;
   modelo: string;
   prompt: string;
   mensajes: Mensajes;
@@ -66,7 +68,7 @@ export interface Ficha {
   precioPersonalizado: number | null;
   emailContacto: string | null;
   publicToken: string;
-  canales: (Canal & { id: string })[];
+  canales: Canal[];
   subscription: {
     medio: MedioPago;
     estadoPago: EstadoPago;
@@ -74,7 +76,6 @@ export interface Ficha {
     vencimiento: string;
     mpInitPoint: string | null;
   } | null;
-  appTokenMask: string | null;
   importe: number;
   linkPublico: string;
   usuario?: { id: string; email: string; nombre: string; ultimoLogin: string | null; createdAt: string } | null;
@@ -144,9 +145,19 @@ export interface Perfil {
   turnos?: { servicios: string; horarios: string; duracionMin: number; anticipacionHoras: number };
 }
 
+export interface IntegracionWeb {
+  activa: boolean;
+  clave: string | null;
+  /** Dominios habilitados (sin esquema ni www). Vacío: cualquier sitio. */
+  origenes: string[];
+  bienvenida: string | null;
+  color: string | null;
+  endpoint: string | null;
+  script: string | null;
+}
+
 export interface Requisitos {
   pago: boolean;
-  manychat: boolean;
   canal: boolean;
   prompt: boolean;
 }
@@ -170,7 +181,7 @@ export interface Cuenta {
   plan: Plan;
   planElegido: boolean;
   canales: Canal[];
-  manychat: { pageId: string | null; appTokenMask: string | null; apiKey: string; entrada: string; salida: string };
+  web: IntegracionWeb;
   suscripcion: {
     medio: MedioPago;
     estadoPago: EstadoPago;

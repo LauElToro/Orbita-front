@@ -6,7 +6,7 @@ import { Logo } from '../components/Sitio';
 import { Badge, ErrorMsg, Section, UsoBar } from '../components/ui';
 import { ESTADO_PAGO, MEDIO, fecha, pesos } from '../format';
 import type { Cuenta, Pago, Plan, PlanId, Turno, Uso } from '../types';
-import { CanalesForm, GuiaManychat, ManychatForm, PagoBloque, PerfilForm, Simulador, TextosForm } from './formularios';
+import { CanalesForm, GuiaCanales, GuiaWeb, PagoBloque, WebForm, PerfilForm, Simulador, TextosForm } from './formularios';
 import { Tutorial } from './Tutorial';
 import { useAccionCuenta, useCuenta } from './useCuenta';
 
@@ -323,14 +323,16 @@ export function Conexion() {
   return (
     <ZonaExplorar cuenta={cuenta}>
       <h1>Conexión</h1>
-      <Section title="ManyChat">
-        <ManychatForm cuenta={cuenta} boton="Guardar" />
-      </Section>
       <Section title="Canales">
         <CanalesForm cuenta={cuenta} />
       </Section>
-      <Section title="Guía del flujo">
-        <GuiaManychat cuenta={cuenta} />
+      <Section title="Dónde encontrar cada dato">
+        <GuiaCanales />
+      </Section>
+      <Section title="Integración web">
+        <WebForm cuenta={cuenta} />
+        <h3>Dónde pegar el código</h3>
+        <GuiaWeb />
       </Section>
     </ZonaExplorar>
   );
