@@ -79,4 +79,4 @@ Los precios viven en el backend junto con los planes. El frontend los muestra y 
 ## Correr
 - Docker: `docker compose up -d --build` en la raíz; el sitio queda en `http://localhost:${WEB_PORT}` (8080 en el `.env` actual).
 - Desarrollo: `npm run dev` en `Frontend/` (Vite en `:5173`, con proxy de `/api` a `http://localhost:3000`).
-- Tests: `npm test` (Vitest + Testing Library). `npm run test:coverage` genera `coverage/lcov.info` para SonarQube.
+- Tests: `npm test` (Vitest + Testing Library). `npm run test:coverage` genera `coverage/lcov.info`.
