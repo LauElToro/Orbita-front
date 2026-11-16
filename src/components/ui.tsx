@@ -17,6 +17,29 @@ export function Section({ title, actions, children }: { title: string; actions?:
   );
 }
 
+export function PageHead({ title, sub, eyebrow, children }: { title: ReactNode; sub?: ReactNode; eyebrow?: string; children?: ReactNode }) {
+  return (
+    <div className="page-head">
+      <div>
+        {eyebrow && <p className="kicker">{eyebrow}</p>}
+        <h1>{title}</h1>
+        {sub && <p className="page-sub">{sub}</p>}
+      </div>
+      {children && <div className="actions">{children}</div>}
+    </div>
+  );
+}
+
+export function Vacio({ icono, titulo, children }: { icono: ReactNode; titulo: string; children?: ReactNode }) {
+  return (
+    <div className="vacio">
+      <span className="icono-tile">{icono}</span>
+      <h3>{titulo}</h3>
+      {children}
+    </div>
+  );
+}
+
 export function UsoBar({ label, usado, tope, reinicia }: { label: string; usado: number; tope: number; reinicia?: string }) {
   const pct = porcentaje(usado, tope);
   const tone = pct >= 100 ? 'bad' : pct >= 80 ? 'warn' : 'ok';

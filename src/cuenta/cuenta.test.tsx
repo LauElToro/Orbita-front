@@ -369,7 +369,7 @@ describe('tutorial por plan', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Quiero un turno para mañana a las 10' }));
     expect(await screen.findByText('¡Listo! Te agendé.')).toBeInTheDocument();
     expect(screen.getByText('Reservaría un turno el 2026-11-15 10:00')).toBeInTheDocument();
-    expect(body).toEqual({ texto: 'Quiero un turno para mañana a las 10', historial: [{ rol: 'user', texto: 'Quiero un turno para mañana a las 10' }] });
+    expect(body).toEqual({ texto: 'Quiero un turno para mañana a las 10', historial: [] });
     await userEvent.click(screen.getByRole('button', { name: 'Reiniciar' }));
     expect(screen.queryByText('¡Listo! Te agendé.')).not.toBeInTheDocument();
   });
@@ -407,6 +407,75 @@ describe('tutorial por plan', () => {
     expect(await screen.findByText('Ana')).toBeInTheDocument();
     expect(await screen.findByLabelText('Este período')).toHaveAttribute('aria-valuenow', '3');
     expect(screen.getByRole('link', { name: 'Agenda' })).toBeInTheDocument();
+  });
+});
+
+describe('demo', () => {
+  const sinPago = () =>
+    cuenta({
+      suscripcion: { medio: 'mercadopago', estadoPago: 'pendiente', vencimiento: '2026-11-14T15:00:00.000Z', importe: 84000, mpInitPoint: null },
+      onboarding: { paso: 0, completado: null, requisitos: { pago: false, canal: false, prompt: false } },
+    });
+  const DEMO = {
+    negocio: 'Peluquería Luna',
+    config: { negocio: '', funciones: ['horarios', 'derivar'], horarios: '', tono: 'cercano' },
+    mensajes: 0,
+    fuentes: [],
+    limites: { fuentes: 6, megas: 5, caracteresTotal: 60000 },
+    usados: 0,
+  };
+  const EJEMPLO = {
+    ...DEMO,
+    negocio: 'Tienda Andes',
+    config: { negocio: 'Tienda Andes', funciones: ['stock', 'horarios', 'pedidos', 'derivar'], horarios: 'Lunes a viernes de 10 a 20', tono: 'cercano' },
+    fuentes: [
+      { id: 'f1', tipo: 'tabla', nombre: 'stock.tsv', caracteres: 400, filas: 12, createdAt: '2026-11-16T15:00:00.000Z', columnas: ['producto', 'stock'], muestra: [['Remera básica', '8']] },
+    ],
+    usados: 400,
+  };
+
+  it('una cuenta sin pagar la encuentra desde el inicio y las secciones bloqueadas', async () => {
+    conSesion();
+    mockApi({ 'GET /cuenta/me': sinPago(), 'GET /publico/planes': PUBLICOS });
+    renderApp('/cuenta');
+    expect(await screen.findByRole('link', { name: /Abrir la demo/ })).toHaveAttribute('href', '/cuenta/demo');
+    await userEvent.click(screen.getByRole('link', { name: 'Probar' }));
+    expect(await screen.findByRole('link', { name: 'Probar la demo' })).toHaveAttribute('href', '/cuenta/demo');
+  });
+
+  it('carga el ejemplo, prende funciones y responde con acciones', async () => {
+    conSesion();
+    let config: unknown = null;
+    let chat: unknown = null;
+    mockApi({
+      'GET /cuenta/me': sinPago(),
+      'GET /cuenta/demo': DEMO,
+      'POST /cuenta/demo/ejemplo': EJEMPLO,
+      'PUT /cuenta/demo': (init: RequestInit) => {
+        config = JSON.parse(String(init.body));
+        return { body: { ...EJEMPLO, config: { ...EJEMPLO.config, funciones: [...EJEMPLO.config.funciones, 'turnos'] } } };
+      },
+      'POST /cuenta/demo/chat': (init: RequestInit) => {
+        chat = JSON.parse(String(init.body));
+        return { body: { texto: 'Sí, te separo una.', handoff: false, acciones: ['Separaría 1 × Remera básica'] } };
+      },
+    });
+    renderApp('/cuenta/demo');
+    expect(await screen.findByText('Todavía no cargaste información')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Usar datos de ejemplo' }));
+    expect(await screen.findByText('stock.tsv')).toBeInTheDocument();
+    expect(screen.getByText('Planilla · 12 filas')).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: /Stock y precios/ })).toHaveAttribute('aria-checked', 'true');
+
+    await userEvent.click(screen.getByRole('switch', { name: /Turnos/ }));
+    await waitFor(() => expect(config).toMatchObject({ funciones: ['stock', 'horarios', 'pedidos', 'derivar', 'turnos'], negocio: 'Tienda Andes' }));
+    expect(await screen.findByRole('switch', { name: /Turnos/ })).toHaveAttribute('aria-checked', 'true');
+
+    await userEvent.click(screen.getByRole('button', { name: '¿Tienen Remera básica?' }));
+    expect(await screen.findByText('Sí, te separo una.')).toBeInTheDocument();
+    expect(screen.getByText('Separaría 1 × Remera básica')).toBeInTheDocument();
+    expect(chat).toEqual({ texto: '¿Tienen Remera básica?', historial: [] });
+    expect(screen.getByRole('link', { name: 'Activar mi plan' })).toHaveAttribute('href', '/cuenta/plan');
   });
 });
 

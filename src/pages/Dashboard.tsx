@@ -65,7 +65,7 @@ export function Dashboard() {
         <Kpi
           label="Leads"
           valor={String(m.embudo.onboardingSinPago)}
-          detalle="Se registraron y todavía no pagaron"
+          detalle={`Se registraron y no pagaron · ${m.embudo.probaronDemo} probaron la demo`}
           tono={m.embudo.onboardingSinPago ? 'warn' : undefined}
         />
         <Kpi label="Respuestas hoy" valor={numero(m.mensajes.hoy)} detalle={`${numero(m.mensajes.ultimos30)} en 30 días`} />
@@ -122,6 +122,8 @@ export function Dashboard() {
             <dd>{m.embudo.enOnboarding}</dd>
             <dt>Leads</dt>
             <dd>{m.embudo.onboardingSinPago}</dd>
+            <dt>Leads que probaron la demo</dt>
+            <dd>{m.embudo.probaronDemo}</dd>
             <dt>Activados</dt>
             <dd>{m.embudo.activados30d}</dd>
           </dl>

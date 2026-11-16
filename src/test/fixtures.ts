@@ -93,7 +93,7 @@ export const METRICAS: Metricas = {
   },
   cobranza: { al_dia: 2, impago: 1 },
   mensajes: { hoy: 42, ultimos30: 900, serie: [{ dia: '2026-10-16', respuestas: 10 }, { dia: '2026-11-14', respuestas: 42 }] },
-  embudo: { registros30d: 3, enOnboarding: 1, onboardingSinPago: 1, activados30d: 2 },
+  embudo: { registros30d: 3, enOnboarding: 1, onboardingSinPago: 1, probaronDemo: 1, activados30d: 2 },
   tickets: { porEstado: { nuevo: 2, contratado: 1 }, conversion: 33, arrepentimientosAbiertos: 1 },
   alertas: {
     cercaDelTope: [{ id: 'pizzeria-norte', nombre: 'Pizzería Norte', usado: 3500, tope: 4000, pct: 88 }],

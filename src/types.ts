@@ -199,6 +199,30 @@ export interface Simulacion {
   acciones: string[];
 }
 
+export type FuncionDemo = 'stock' | 'horarios' | 'turnos' | 'pedidos' | 'derivar';
+
+export interface FuenteDemo {
+  id: string;
+  tipo: 'texto' | 'pdf' | 'tabla';
+  nombre: string;
+  caracteres: number;
+  filas: number;
+  createdAt: string;
+  vista?: string;
+  columnas?: string[];
+  muestra?: string[][];
+}
+
+export interface Demo {
+  /** Nombre con el que se presenta la IA: el de la demo si se cargó uno, si no el del negocio. */
+  negocio: string;
+  config: { negocio: string; funciones: FuncionDemo[]; horarios: string; tono: Tono };
+  mensajes: number;
+  fuentes: FuenteDemo[];
+  limites: { fuentes: number; megas: number; caracteresTotal: number };
+  usados: number;
+}
+
 export interface Pago {
   id: string;
   medio: MedioPago;
@@ -226,7 +250,7 @@ export interface Metricas {
   };
   cobranza: Record<string, number>;
   mensajes: { hoy: number; ultimos30: number; serie: { dia: string; respuestas: number }[] };
-  embudo: { registros30d: number; enOnboarding: number; onboardingSinPago: number; activados30d: number };
+  embudo: { registros30d: number; enOnboarding: number; onboardingSinPago: number; probaronDemo: number; activados30d: number };
   tickets: { porEstado: Record<string, number>; conversion: number; arrepentimientosAbiertos: number };
   alertas: {
     cercaDelTope: { id: string; nombre: string; usado: number; tope: number; pct: number }[];

@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { RequireAuth } from './components/RequireAuth';
 import { GoogleVuelta, Ingresar, Olvide, Registro, Restablecer } from './cuenta/Acceso';
+import { Demo } from './cuenta/Demo';
 import { Agenda, Ajustes, Conexion, CuentaLayout, Inicio, MiIA, PlanYPagos, Probar } from './cuenta/Panel';
 import { Arrepentimiento } from './legal/Arrepentimiento';
 import { Privacidad } from './legal/Privacidad';
@@ -33,6 +34,7 @@ export function App() {
       <Route path="/restablecer/:token" element={<Restablecer />} />
       <Route path="/cuenta" element={<CuentaLayout />}>
         <Route index element={<Inicio />} />
+        <Route path="demo" element={<Demo />} />
         <Route path="ia" element={<MiIA />} />
         <Route path="probar" element={<Probar />} />
         <Route path="conexion" element={<Conexion />} />

@@ -88,13 +88,15 @@ export function Landing() {
           </p>
           <div className="actions">
             <Link to="/registro" className="button button-lg">
-              Empezar ahora
+              Probá la demo gratis
             </Link>
             <a href="#planes" className="button button-lg button-ghost">
               Ver planes
             </a>
           </div>
-          <p className="small hero-nota">Creá la cuenta y explorá gratis · La IA se habilita al pagar · 10 días para arrepentirte</p>
+          <p className="small hero-nota">
+            Subí tu PDF o tu planilla de stock y mirá cómo responde · Sin tarjeta · 10 días para arrepentirte
+          </p>
         </div>
         <ChatDemo />
       </section>

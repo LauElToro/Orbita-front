@@ -1,6 +1,17 @@
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import { session } from '../api';
-import { Logo } from './Sitio';
+import { PanelShell, type GrupoNav } from './Shell';
+
+const GRUPOS: GrupoNav[] = [
+  { items: [{ to: '/admin', label: 'Resumen', icono: 'grafico', end: true }] },
+  {
+    titulo: 'Gestión',
+    items: [
+      { to: '/admin/clientes', label: 'Clientes', icono: 'clientes' },
+      { to: '/admin/tickets', label: 'Tickets', icono: 'tickets' },
+    ],
+  },
+];
 
 export function Layout() {
   const navigate = useNavigate();
@@ -9,26 +20,8 @@ export function Layout() {
     navigate('/admin/login');
   };
   return (
-    <div className="app">
-      <header className="topbar">
-        <Link to="/admin" className="brand">
-          <Logo claro />
-        </Link>
-        <span className="badge badge-muted">Equipo</span>
-        <nav>
-          <NavLink to="/admin" end>
-            Resumen
-          </NavLink>
-          <NavLink to="/admin/clientes">Clientes</NavLink>
-          <NavLink to="/admin/tickets">Tickets</NavLink>
-        </nav>
-        <button className="link" onClick={salir}>
-          Salir
-        </button>
-      </header>
-      <main className="content">
-        <Outlet />
-      </main>
-    </div>
+    <PanelShell inicio="/admin" grupos={GRUPOS} usuario={{ nombre: 'Equipo Orbita', detalle: 'Panel interno' }} onSalir={salir}>
+      <Outlet />
+    </PanelShell>
   );
 }

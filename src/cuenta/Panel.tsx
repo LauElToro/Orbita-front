@@ -1,13 +1,14 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useState, type FormEvent, type ReactNode } from 'react';
-import { Link, Navigate, NavLink, Outlet, useNavigate, useOutletContext } from 'react-router-dom';
+import { Link, Navigate, Outlet, useLocation, useNavigate, useOutletContext } from 'react-router-dom';
 import { api, sesionCliente } from '../api';
-import { Logo } from '../components/Sitio';
-import { Badge, ErrorMsg, Section, UsoBar } from '../components/ui';
+import { Icono, type NombreIcono } from '../components/Iconos';
+import { PanelShell, type GrupoNav, type ItemNav } from '../components/Shell';
+import { Badge, ErrorMsg, PageHead, Section, UsoBar } from '../components/ui';
 import { ESTADO_PAGO, MEDIO, fecha, pesos } from '../format';
 import type { Cuenta, Pago, Plan, PlanId, Turno, Uso } from '../types';
 import { CanalesForm, GuiaCanales, GuiaWeb, PagoBloque, WebForm, PerfilForm, Simulador, TextosForm } from './formularios';
-import { Tutorial } from './Tutorial';
+import { pasosDe, Tutorial } from './Tutorial';
 import { useAccionCuenta, useCuenta } from './useCuenta';
 
 export const useCuentaActual = () => useOutletContext<Cuenta>();
@@ -43,6 +44,63 @@ export function CuentaLayout() {
   return <CuentaShell />;
 }
 
+function gruposDe(c: Cuenta | undefined): GrupoNav[] {
+  const listo = Boolean(c?.onboarding.completado);
+  const explorar = Boolean(c && !c.onboarding.completado && !c.onboarding.requisitos.pago);
+  const ver = listo || explorar;
+  const items = (lista: (ItemNav | false)[]) => lista.filter((i): i is ItemNav => Boolean(i));
+  return [
+    { items: [{ to: '/cuenta', label: 'Inicio', icono: 'inicio', end: true }] },
+    {
+      titulo: 'Tu IA',
+      items: items([
+        { to: '/cuenta/demo', label: 'Demo', icono: 'demo', etiqueta: 'Gratis' },
+        ver && { to: '/cuenta/ia', label: 'Mi IA', icono: 'ia', bloqueado: explorar },
+        ver && { to: '/cuenta/probar', label: 'Probar', icono: 'probar', bloqueado: explorar },
+        ver && !!c?.negocio.modulos.includes('turnos') && { to: '/cuenta/agenda', label: 'Agenda', icono: 'agenda', bloqueado: explorar },
+      ]),
+    },
+    ...(ver ? [{ titulo: 'Canales', items: [{ to: '/cuenta/conexion', label: 'Conexión', icono: 'conexion' as const, bloqueado: explorar }] }] : []),
+    {
+      titulo: 'Cuenta',
+      items: [
+        { to: '/cuenta/plan', label: 'Plan y pagos', icono: 'plan' },
+        { to: '/cuenta/ajustes', label: 'Ajustes', icono: 'ajustes' },
+      ],
+    },
+  ];
+}
+
+function BannerProgreso({ cuenta }: { cuenta: Cuenta }) {
+  const { pathname } = useLocation();
+  if (cuenta.onboarding.completado || pathname === '/cuenta') return null;
+  if (!cuenta.onboarding.requisitos.pago) {
+    if (pathname === '/cuenta/demo') return null;
+    return (
+      <Link to="/cuenta/demo" className="banner-progreso">
+        <div>
+          <strong>Probá tu IA gratis con tu información</strong>
+          <span>Subí un PDF o tu planilla de stock y mirá cómo responde antes de activar tu plan.</span>
+        </div>
+        <span className="banner-cta">
+          Abrir la demo <Icono nombre="flecha" tam={16} />
+        </span>
+      </Link>
+    );
+  }
+  const total = pasosDe(cuenta).length;
+  const pct = Math.round((Math.min(cuenta.onboarding.paso + 1, total) / total) * 100);
+  return (
+    <Link to="/cuenta" className="banner-progreso">
+      <div>
+        <strong>Terminá de configurar tu IA</strong>
+        <span>Seguí el tutorial donde lo dejaste. Tu progreso se guarda solo.</span>
+      </div>
+      <span className="banner-pct">{pct}%</span>
+    </Link>
+  );
+}
+
 function CuentaShell() {
   const navigate = useNavigate();
   const cuenta = useCuenta();
@@ -51,125 +109,181 @@ function CuentaShell() {
     navigate('/ingresar');
   };
   const c = cuenta.data;
-  const listo = Boolean(c?.onboarding.completado);
-  const explorar = Boolean(c && !c.onboarding.completado && !c.onboarding.requisitos.pago);
 
   return (
-    <div className="app">
-      <header className="topbar">
-        <Link to="/cuenta" className="brand">
-          <Logo claro />
-        </Link>
-        <nav>
-          <NavLink to="/cuenta" end>
-            Inicio
-          </NavLink>
-          {(listo || explorar) && (
-            <>
-              <NavLink to="/cuenta/ia">Mi IA</NavLink>
-              <NavLink to="/cuenta/probar">Probar</NavLink>
-              <NavLink to="/cuenta/conexion">Conexión</NavLink>
-              {c?.negocio.modulos.includes('turnos') && <NavLink to="/cuenta/agenda">Agenda</NavLink>}
-            </>
-          )}
-          <NavLink to="/cuenta/plan">Plan y pagos</NavLink>
-          <NavLink to="/cuenta/ajustes">Ajustes</NavLink>
-        </nav>
-        <span className="muted small topbar-negocio">{c?.negocio.nombre}</span>
-        <button className="link" onClick={salir}>
-          Salir
-        </button>
-      </header>
-      <main className="content">
-        {cuenta.isLoading && <p className="muted">Cargando...</p>}
-        <ErrorMsg error={cuenta.error} />
-        {explorar && (
-          <p className="banner-explorar">
-            Estás explorando el panel. La IA, la conexión y el simulador se habilitan cuando se acredita el pago con Mercado Pago.
-          </p>
-        )}
-        {c && <Outlet context={c} />}
-      </main>
+    <PanelShell
+      inicio="/cuenta"
+      grupos={gruposDe(c)}
+      usuario={{ nombre: c?.negocio.nombre ?? 'Tu negocio', detalle: c ? `Plan ${c.plan.nombre}` : undefined }}
+      onSalir={salir}
+      banner={c && <BannerProgreso cuenta={c} />}
+    >
+      {cuenta.isLoading && <div className="skeleton" style={{ height: 220 }} />}
+      <ErrorMsg error={cuenta.error} />
+      {c && <Outlet context={c} />}
       {c && c.legalPendiente.length > 0 && <ModalLegal cuenta={c} />}
-    </div>
+    </PanelShell>
+  );
+}
+
+const primerNombre = (cuenta: Cuenta) => cuenta.usuario?.nombre.split(' ')[0] ?? '';
+
+function Bienvenida({ cuenta }: { cuenta: Cuenta }) {
+  return (
+    <>
+      <PageHead
+        title={`¡Bienvenido a Orbita, ${primerNombre(cuenta)}!`}
+        sub={
+          <>
+            {cuenta.planElegido ? (
+              <>
+                Tu cuenta del plan <strong>{cuenta.plan.nombre}</strong> ya está creada.
+              </>
+            ) : (
+              'Tu cuenta ya está creada.'
+            )}{' '}
+            Probá la demo gratis y, cuando te convenza, activá tu plan para que atienda en tus canales.
+          </>
+        }
+      />
+      <div className="inicio-grid">
+        <section className="card hero-card">
+          <p className="kicker kicker-acento">Gratis · sin tarjeta</p>
+          <h2>Probá tu IA con tu propia información</h2>
+          <p>Subí un PDF, tu planilla de stock (TSV o CSV) o pegá un texto, prendé las funciones que quieras y chateá con ella como si fueras un cliente.</p>
+          <ul className="lista-check">
+            <li>Responde con tus precios, stock y políticas</li>
+            <li>Dice si estás abierto, toma pedidos y agenda turnos</li>
+            <li>Te pasa la charla cuando hace falta</li>
+          </ul>
+          <div className="actions">
+            <Link to="/cuenta/demo" className="button button-lg">
+              Abrir la demo <Icono nombre="flecha" tam={16} />
+            </Link>
+          </div>
+        </section>
+        <section className="card">
+          <p className="paso-titulo">Activá tu plan</p>
+          <PagoBloque cuenta={cuenta} />
+          {cuenta.planElegido && (
+            <p className="small muted">
+              ¿Querés otro plan? Cambialo en <Link to="/cuenta/plan">Plan y pagos</Link>.
+            </p>
+          )}
+        </section>
+      </div>
+      <ol className="pasos-inicio">
+        <li>
+          <span className="paso-num">1</span>
+          <div>
+            <strong>Probá la demo</strong>
+            <small>Con tus archivos o con datos de ejemplo.</small>
+          </div>
+        </li>
+        <li>
+          <span className="paso-num">2</span>
+          <div>
+            <strong>Activá tu plan</strong>
+            <small>Pagás con Mercado Pago y se habilita todo.</small>
+          </div>
+        </li>
+        <li>
+          <span className="paso-num">3</span>
+          <div>
+            <strong>Conectá tus canales</strong>
+            <small>WhatsApp, Instagram, TikTok o tu web.</small>
+          </div>
+        </li>
+      </ol>
+    </>
   );
 }
 
 export function Inicio() {
   const cuenta = useCuentaActual();
   if (!cuenta.onboarding.completado) {
-    if (!cuenta.onboarding.requisitos.pago) {
-      return (
-        <div className="narrow-center">
-          <Section title={`¡Bienvenido a Orbita, ${cuenta.usuario?.nombre.split(' ')[0] ?? ''}!`}>
-            <p>
-              {cuenta.planElegido ? (
-                <>
-                  Tu cuenta del plan <strong>{cuenta.plan.nombre}</strong> ya está creada.
-                </>
-              ) : (
-                'Tu cuenta ya está creada.'
-              )}{' '}
-              Podés recorrer Mi IA, la conexión, el simulador y la agenda.
-              Hasta que pagues con Mercado Pago, esas pantallas se ven pero no guardan cambios ni responden mensajes.
-            </p>
-            <PagoBloque cuenta={cuenta} />
-            {cuenta.planElegido && (
-              <p className="small muted">
-                ¿Querés otro plan? Cambialo en <Link to="/cuenta/plan">Plan y pagos</Link>.
-              </p>
-            )}
-          </Section>
-        </div>
-      );
-    }
+    if (!cuenta.onboarding.requisitos.pago) return <Bienvenida cuenta={cuenta} />;
     return <Tutorial cuenta={cuenta} />;
   }
   return <Resumen cuenta={cuenta} />;
 }
 
-function EstadoIA({ cuenta }: { cuenta: Cuenta }) {
+const useUso = () => useQuery({ queryKey: ['cuenta-uso'], queryFn: () => api<Uso>('/cuenta/uso'), refetchInterval: 60_000 });
+
+function TarjetaNegocio({ cuenta }: { cuenta: Cuenta }) {
   const accion = useAccionCuenta();
+  const uso = useUso();
   const activo = cuenta.negocio.estado === 'activo';
   const motivo = cuenta.negocio.pausaMotivo;
+  const conectados = cuenta.canales.filter((c) => c.conectado).length + (cuenta.web.activa ? 1 : 0);
   return (
-    <Section
-      title="Tu IA"
-      actions={
-        activo ? (
-          <button className="secondary" onClick={() => confirm('Mientras esté pausada no va a responder mensajes. ¿Pausar?') && accion.mutate({ path: 'pausar' })}>
-            Pausar
-          </button>
-        ) : (
-          <button onClick={() => accion.mutate({ path: 'activar' })} disabled={cuenta.suscripcion?.estadoPago !== 'al_dia'}>
-            Activar
-          </button>
-        )
-      }
-    >
-      <p className="estado-ia">
-        <span className={`punto ${activo ? 'punto-on' : ''}`} />
-        {activo ? 'Respondiendo mensajes' : motivo === 'impago' ? 'Pausada por falta de pago' : 'Pausada'}
-      </p>
-      {motivo === 'impago' && (
-        <p className="small">
-          Regularizá el pago en <Link to="/cuenta/plan">Plan y pagos</Link> y se reactiva sola.
+    <section className="card negocio-card">
+      <div className="negocio-portada">
+        <span className={`estado-pill ${activo ? 'estado-pill-on' : ''}`}>
+          <span className={`punto ${activo ? 'punto-on' : ''}`} />
+          {activo ? 'En línea' : 'Fuera de línea'}
+        </span>
+      </div>
+      <div className="negocio-cuerpo">
+        <span className="negocio-avatar" aria-hidden="true">
+          {cuenta.negocio.nombre.charAt(0).toUpperCase()}
+        </span>
+        <h2>{cuenta.negocio.nombre}</h2>
+        <p className="estado-ia">
+          <span className={`punto ${activo ? 'punto-on' : ''}`} />
+          {activo ? 'Respondiendo mensajes' : motivo === 'impago' ? 'Pausada por falta de pago' : 'Pausada'}
         </p>
-      )}
-      <ErrorMsg error={accion.error} />
-    </Section>
+        {motivo === 'impago' && (
+          <p className="small">
+            Regularizá el pago en <Link to="/cuenta/plan">Plan y pagos</Link> y se reactiva sola.
+          </p>
+        )}
+        <dl className="stats">
+          <div>
+            <dt>Respuestas hoy</dt>
+            <dd>{uso.data?.dia.usado ?? '—'}</dd>
+          </div>
+          <div>
+            <dt>En el período</dt>
+            <dd>{uso.data ? `${uso.data.mes.usado.toLocaleString('es-AR')}` : '—'}</dd>
+          </div>
+          <div>
+            <dt>Canales conectados</dt>
+            <dd>{conectados}</dd>
+          </div>
+        </dl>
+        <div className="negocio-acciones">
+          {activo ? (
+            <button className="secondary" onClick={() => confirm('Mientras esté pausada no va a responder mensajes. ¿Pausar?') && accion.mutate({ path: 'pausar' })}>
+              Pausar
+            </button>
+          ) : (
+            <button onClick={() => accion.mutate({ path: 'activar' })} disabled={cuenta.suscripcion?.estadoPago !== 'al_dia'}>
+              Activar
+            </button>
+          )}
+          <Link to="/cuenta/conexion" className="button secondary">
+            Canales
+          </Link>
+          <Link to="/cuenta/probar" className="button">
+            Probar mi IA
+          </Link>
+        </div>
+        <ErrorMsg error={accion.error} />
+      </div>
+    </section>
   );
 }
 
 function BloqueUso() {
-  const uso = useQuery({ queryKey: ['cuenta-uso'], queryFn: () => api<Uso>('/cuenta/uso'), refetchInterval: 60_000 });
+  const uso = useUso();
   return (
     <Section title="Respuestas usadas">
       <ErrorMsg error={uso.error} />
       {uso.data && (
-        <div className="grid3">
-          <UsoBar label="Hoy" {...uso.data.dia} />
-          <UsoBar label="Esta semana" {...uso.data.semana} />
+        <div className="usos">
+          <UsoBar label="Hoy" {...uso.data.dia} reinicia={fecha(uso.data.dia.reinicia)} />
+          <UsoBar label="Esta semana" {...uso.data.semana} reinicia={fecha(uso.data.semana.reinicia)} />
           <UsoBar label="Este período" {...uso.data.mes} reinicia={fecha(uso.data.mes.reinicia)} />
         </div>
       )}
@@ -177,19 +291,30 @@ function BloqueUso() {
   );
 }
 
+const MEJORA: Partial<Record<PlanId, { a: string; texto: string }>> = {
+  mensajes: { a: 'Turnos', texto: 'tu IA agenda y cancela turnos sola, y sumás un segundo canal.' },
+  turnos: { a: 'Completo', texto: 'sumás recordatorios automáticos, un tercer canal y un modelo de IA más capaz.' },
+};
+
+const ACCESOS: { to: string; titulo: string; detalle: string; icono: NombreIcono; modulo?: string }[] = [
+  { to: '/cuenta/ia', titulo: 'Editar mi IA', detalle: 'Información, tono y preguntas', icono: 'ia' },
+  { to: '/cuenta/probar', titulo: 'Simulador', detalle: 'Chateá como si fueras un cliente', icono: 'probar' },
+  { to: '/cuenta/demo', titulo: 'Subir archivos a la demo', detalle: 'PDF, planillas de stock y textos', icono: 'demo' },
+  { to: '/cuenta/conexion', titulo: 'Conexión', detalle: 'WhatsApp, Instagram, TikTok y web', icono: 'conexion' },
+  { to: '/cuenta/agenda', titulo: 'Ver agenda', detalle: 'Los turnos que tomó tu IA', icono: 'agenda', modulo: 'turnos' },
+  { to: '/cuenta/plan', titulo: 'Plan y pagos', detalle: 'Vencimiento e historial', icono: 'plan' },
+];
+
 function Resumen({ cuenta }: { cuenta: Cuenta }) {
   const sub = cuenta.suscripcion;
+  const mejora = MEJORA[cuenta.plan.id];
   return (
     <>
-      <div className="page-head">
-        <h1>{cuenta.negocio.nombre}</h1>
-        <Link to="/cuenta/probar" className="button secondary">
-          Probar mi IA
-        </Link>
-      </div>
+      <PageHead title={`Hola, ${primerNombre(cuenta) || cuenta.negocio.nombre}`} sub="Todo lo de tu IA, en un solo lugar." />
+      <TarjetaNegocio cuenta={cuenta} />
       <div className="split">
-        <EstadoIA cuenta={cuenta} />
-        <Section title="Plan">
+        <BloqueUso />
+        <Section title="Plan" actions={<Link to="/cuenta/plan">Ver detalle</Link>}>
           <dl className="kv">
             <dt>Plan</dt>
             <dd>{cuenta.plan.nombre}</dd>
@@ -204,7 +329,28 @@ function Resumen({ cuenta }: { cuenta: Cuenta }) {
           </dl>
         </Section>
       </div>
-      <BloqueUso />
+      {mejora && (
+        <section className="card card-upsell">
+          <span className="pill">Plan {cuenta.plan.nombre}</span>
+          <p>
+            <strong>Con {mejora.a}</strong> {mejora.texto}
+          </p>
+          <Link to="/cuenta/plan" className="button">
+            Mejorar mi plan
+          </Link>
+        </section>
+      )}
+      <div className="accesos">
+        {ACCESOS.filter((a) => !a.modulo || cuenta.negocio.modulos.includes(a.modulo)).map((a) => (
+          <Link key={a.to} to={a.to} className="acceso">
+            <span className="icono-tile icono-tile-sm">
+              <Icono nombre={a.icono} />
+            </span>
+            <strong>{a.titulo}</strong>
+            <small>{a.detalle}</small>
+          </Link>
+        ))}
+      </div>
       {cuenta.negocio.modulos.includes('turnos') && <ProximosTurnos limite={5} />}
     </>
   );
@@ -245,8 +391,26 @@ function ZonaExplorar({ cuenta, children }: { cuenta: Cuenta; children: ReactNod
   if (cuenta.onboarding.requisitos.pago || cuenta.onboarding.completado) return <>{children}</>;
   return (
     <div className="explorar">
-      <p className="aviso-explorar">Estás explorando. Esta parte se habilita cuando se acredita el pago con Mercado Pago.</p>
-      <fieldset disabled>{children}</fieldset>
+      <section className="card bloqueo">
+        <span className="icono-tile icono-tile-acento">
+          <Icono nombre="candado" tam={22} />
+        </span>
+        <div>
+          <h2>Disponible con tu plan</h2>
+          <p>Estás explorando. Esta parte se habilita cuando se acredita el pago con Mercado Pago. Mientras tanto, probá la demo gratis con tu información.</p>
+        </div>
+        <div className="actions">
+          <Link to="/cuenta/demo" className="button secondary">
+            Probar la demo
+          </Link>
+          <Link to="/cuenta/plan" className="button">
+            Activar mi plan
+          </Link>
+        </div>
+      </section>
+      <fieldset disabled className="explorar-contenido">
+        {children}
+      </fieldset>
     </div>
   );
 }
@@ -255,7 +419,7 @@ export function Agenda() {
   const cuenta = useCuentaActual();
   return (
     <ZonaExplorar cuenta={cuenta}>
-      <h1>Agenda</h1>
+      <PageHead title="Agenda" sub="Los turnos que agendó tu IA, de la última semana en adelante." />
       <ProximosTurnos />
     </ZonaExplorar>
   );
@@ -269,7 +433,7 @@ export function MiIA() {
     : (['espera', 'tope', 'handoff'] as const);
   return (
     <ZonaExplorar cuenta={cuenta}>
-      <h1>Mi IA</h1>
+      <PageHead title="Mi IA" sub="Lo que sabe tu IA de tu negocio y cómo habla con tus clientes." />
       <Section title="Información del negocio">
         <PerfilForm cuenta={cuenta} secciones={['negocio', 'turnos', 'estilo']} boton="Guardar cambios" />
       </Section>
@@ -310,10 +474,14 @@ export function Probar() {
   const cuenta = useCuentaActual();
   return (
     <ZonaExplorar cuenta={cuenta}>
-      <h1>Probar mi IA</h1>
-      <Section title="Simulador">
+      <PageHead title="Probar mi IA" sub="Usa tu información y tus módulos reales, pero no reserva turnos, no envía nada ni consume tu plan.">
+        <Link to="/cuenta/ia" className="button secondary">
+          Ajustar respuestas
+        </Link>
+      </PageHead>
+      <section className="card card-chat probar-chat">
         <Simulador cuenta={cuenta} />
-      </Section>
+      </section>
     </ZonaExplorar>
   );
 }
@@ -322,7 +490,7 @@ export function Conexion() {
   const cuenta = useCuentaActual();
   return (
     <ZonaExplorar cuenta={cuenta}>
-      <h1>Conexión</h1>
+      <PageHead title="Conexión" sub="Dónde atiende tu IA: tus redes y tu web." />
       <Section title="Canales">
         <CanalesForm cuenta={cuenta} />
       </Section>
@@ -358,7 +526,7 @@ export function PlanYPagos() {
 
   return (
     <>
-      <h1>Plan y pagos</h1>
+      <PageHead title="Plan y pagos" sub="Tu abono, el próximo vencimiento y los pagos registrados." />
       <Section title="Pago">
         <PagoBloque cuenta={cuenta} />
         {cuenta.suscripcion?.estadoPago === 'al_dia' && (
@@ -436,7 +604,7 @@ export function Ajustes() {
   };
   return (
     <>
-      <h1>Ajustes</h1>
+      <PageHead title="Ajustes" sub="Tus datos, tu contraseña y los documentos legales." />
       <Section title="Tu cuenta">
         <dl className="kv">
           <dt>Nombre</dt>

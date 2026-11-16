@@ -2,6 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { api } from '../api';
 import { CanalesEditor, canalesParaEnviar, canalVacio } from '../components/CanalesEditor';
+import { Icono } from '../components/Iconos';
 import { Copiar, ErrorMsg } from '../components/ui';
 import { pesos } from '../format';
 import type { Canal, Cuenta, Mensajes, Perfil, Plan, PlanId, Simulacion, Tono } from '../types';
@@ -489,28 +490,51 @@ export function sugerenciasDe(cuenta: Cuenta): string[] {
   return base;
 }
 
-export function Simulador({ cuenta }: { cuenta: Cuenta }) {
+interface ChatProps {
+  endpoint: string;
+  negocio: string;
+  estado: string;
+  sugerencias: string[];
+  vacio: string;
+}
+
+/** Chat de prueba contra el simulador o la demo: nada se envía a los canales ni consume el plan. */
+export function ChatPrueba({ endpoint, negocio, estado, sugerencias, vacio }: ChatProps) {
   const [lineas, setLineas] = useState<Linea[]>([]);
   const [texto, setTexto] = useState('');
   const probar = useMutation({
-    mutationFn: (mensaje: string) =>
-      api<Simulacion>('/cuenta/probar', {
+    mutationFn: ({ mensaje, previas }: { mensaje: string; previas: Linea[] }) =>
+      api<Simulacion>(endpoint, {
         method: 'POST',
-        body: { texto: mensaje, historial: lineas.slice(-20).map(({ rol, texto: t }) => ({ rol, texto: t })) },
+        body: { texto: mensaje, historial: previas.slice(-20).map(({ rol, texto: t }) => ({ rol, texto: t })) },
       }),
     onSuccess: (r) => setLineas((ls) => [...ls, { rol: 'assistant', texto: r.texto, acciones: r.acciones, handoff: r.handoff }]),
   });
   const enviar = (mensaje: string) => {
     if (!mensaje.trim() || probar.isPending) return;
-    setLineas((ls) => [...ls, { rol: 'user', texto: mensaje }]);
+    setLineas([...lineas, { rol: 'user', texto: mensaje }]);
     setTexto('');
-    probar.mutate(mensaje);
+    probar.mutate({ mensaje, previas: lineas });
   };
 
   return (
-    <div className="simulador">
-      <div className="sim-chat" aria-live="polite">
-        {lineas.length === 0 && <p className="muted small centrado">Escribile como si fueras un cliente. Nada de esto se envía ni consume tu plan.</p>}
+    <div className="chat">
+      <div className="chat-head">
+        <span className="avatar">{negocio.trim().charAt(0).toUpperCase() || 'O'}</span>
+        <div>
+          <strong>{negocio}</strong>
+          <small>
+            <span className="punto punto-on" /> {estado}
+          </small>
+        </div>
+        {lineas.length > 0 && (
+          <button type="button" className="ghost-btn" onClick={() => setLineas([])}>
+            <Icono nombre="reiniciar" tam={15} /> Reiniciar
+          </button>
+        )}
+      </div>
+      <div className="chat-cuerpo" aria-live="polite">
+        {lineas.length === 0 && <p className="chat-vacio">{vacio}</p>}
         {lineas.map((l, i) => (
           <div key={i} className={`burbuja ${l.rol === 'user' ? 'out' : 'in'}`}>
             {l.texto}
@@ -522,34 +546,49 @@ export function Simulador({ cuenta }: { cuenta: Cuenta }) {
             {l.handoff && <span className="sim-accion">Te avisaría para que sigas vos</span>}
           </div>
         ))}
-        {probar.isPending && <div className="burbuja in muted">Escribiendo...</div>}
+        {probar.isPending && (
+          <div className="burbuja in escribiendo" aria-label="Escribiendo">
+            <span />
+            <span />
+            <span />
+          </div>
+        )}
       </div>
-      <div className="chips">
-        {sugerenciasDe(cuenta).map((s) => (
-          <button key={s} type="button" className="chip" onClick={() => enviar(s)}>
-            {s}
-          </button>
-        ))}
-      </div>
+      {sugerencias.length > 0 && (
+        <div className="chips">
+          {sugerencias.map((s) => (
+            <button key={s} type="button" className="chip" onClick={() => enviar(s)}>
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
       <form
-        className="row"
+        className="chat-form"
         onSubmit={(e) => {
           e.preventDefault();
           enviar(texto);
         }}
       >
-        <input aria-label="Mensaje de prueba" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Escribí un mensaje..." />
+        <input aria-label="Mensaje de prueba" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Escribí como si fueras un cliente..." />
         <button type="submit" disabled={!texto.trim() || probar.isPending}>
-          Enviar
+          <Icono nombre="enviar" tam={16} /> Enviar
         </button>
-        {lineas.length > 0 && (
-          <button type="button" className="secondary" onClick={() => setLineas([])}>
-            Reiniciar
-          </button>
-        )}
       </form>
       <ErrorMsg error={probar.error} />
     </div>
+  );
+}
+
+export function Simulador({ cuenta }: { cuenta: Cuenta }) {
+  return (
+    <ChatPrueba
+      endpoint="/cuenta/probar"
+      negocio={cuenta.negocio.nombre}
+      estado="Simulador · no se envía nada"
+      sugerencias={sugerenciasDe(cuenta)}
+      vacio="Escribile como si fueras un cliente. Nada de esto se envía ni consume tu plan."
+    />
   );
 }
 
