@@ -114,7 +114,7 @@ function CuentaShell() {
     <PanelShell
       inicio="/cuenta"
       grupos={gruposDe(c)}
-      usuario={{ nombre: c?.negocio.nombre ?? 'Tu negocio', detalle: c ? `Plan ${c.plan.nombre}` : undefined }}
+      usuario={{ nombre: c?.negocio.nombre ?? 'Tu negocio', detalle: c ? (c.planElegido ? `Plan ${c.plan.nombre}` : 'Sin plan') : undefined }}
       onSalir={salir}
       banner={c && <BannerProgreso cuenta={c} />}
     >
@@ -127,6 +127,33 @@ function CuentaShell() {
 }
 
 const primerNombre = (cuenta: Cuenta) => cuenta.usuario?.nombre.split(' ')[0] ?? '';
+
+function FormularioNegocio({ cuenta }: { cuenta: Cuenta }) {
+  const [nombre, setNombre] = useState(cuenta.negocio.nombre === 'Mi negocio' ? '' : cuenta.negocio.nombre);
+  const [rubro, setRubro] = useState(cuenta.negocio.rubro ?? '');
+  const guardar = useAccionCuenta();
+  const enviar = (e: FormEvent) => {
+    e.preventDefault();
+    guardar.mutate({ path: 'negocio', method: 'PATCH', body: { nombre, rubro } });
+  };
+  return (
+    <form onSubmit={enviar} className="narrow">
+      <label>
+        Nombre del negocio
+        <input value={nombre} onChange={(e) => setNombre(e.target.value)} required minLength={2} placeholder="Peluquería Luna" />
+      </label>
+      <label>
+        Rubro
+        <input value={rubro} onChange={(e) => setRubro(e.target.value)} required minLength={2} placeholder="Gastronomía, estética, indumentaria..." />
+      </label>
+      <ErrorMsg error={guardar.error} />
+      {guardar.isSuccess && <p className="ok-msg">Datos del negocio guardados.</p>}
+      <button type="submit" disabled={guardar.isPending || nombre.trim().length < 2 || rubro.trim().length < 2}>
+        {guardar.isPending ? 'Guardando...' : 'Guardar datos'}
+      </button>
+    </form>
+  );
+}
 
 function Bienvenida({ cuenta }: { cuenta: Cuenta }) {
   return (
@@ -146,6 +173,13 @@ function Bienvenida({ cuenta }: { cuenta: Cuenta }) {
           </>
         }
       />
+      {!cuenta.negocio.rubro && (
+        <section className="card">
+          <p className="paso-titulo">Tu negocio</p>
+          <p>Cuando quieras, cargá el nombre y el rubro. También podés hacerlo más tarde desde Ajustes.</p>
+          <FormularioNegocio cuenta={cuenta} />
+        </section>
+      )}
       <div className="inicio-grid">
         <section className="card hero-card">
           <p className="kicker kicker-acento">Gratis · sin tarjeta</p>
@@ -613,7 +647,12 @@ export function Ajustes() {
           <dd>{cuenta.usuario?.email}</dd>
           <dt>Negocio</dt>
           <dd>{cuenta.negocio.nombre}</dd>
+          <dt>Rubro</dt>
+          <dd>{cuenta.negocio.rubro ?? 'Pendiente'}</dd>
         </dl>
+      </Section>
+      <Section title="Datos del negocio">
+        <FormularioNegocio cuenta={cuenta} />
       </Section>
       <Section title="Cambiar contraseña">
         <form onSubmit={enviar} className="narrow">

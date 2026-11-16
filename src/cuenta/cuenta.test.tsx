@@ -94,6 +94,31 @@ describe('registro y acceso del cliente', () => {
     expect(await screen.findByRole('button', { name: 'Pagar con Mercado Pago' })).toBeInTheDocument();
   });
 
+  it('continúa con Google sin completar el formulario y sin plan', async () => {
+    const assign = vi.fn();
+    const ubicacion = window.location;
+    Reflect.deleteProperty(window, 'location');
+    window.location = { ...ubicacion, assign } as unknown as Location;
+    let body: unknown;
+    mockApi({
+      'GET /publico/planes': PUBLICOS,
+      'POST /cuenta/google/iniciar': (init: RequestInit) => {
+        body = JSON.parse(String(init.body));
+        return { body: { url: 'https://accounts.google.com/o/oauth2/auth?x=1' } };
+      },
+    });
+    renderApp('/registro');
+    try {
+      const boton = await screen.findByRole('button', { name: 'Continuar con Google' });
+      expect(boton).toBeEnabled();
+      await userEvent.click(boton);
+      await waitFor(() => expect(body).toEqual({ modo: 'registro' }));
+      expect(assign).toHaveBeenCalledWith('https://accounts.google.com/o/oauth2/auth?x=1');
+    } finally {
+      window.location = ubicacion;
+    }
+  });
+
   it('ingresa, muestra errores y separa la sesión del panel del equipo', async () => {
     let intentos = 0;
     const fetch = mockApi({

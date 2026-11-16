@@ -185,7 +185,6 @@ export function Registro() {
   const [terminos, setTerminos] = useState(false);
   const [privacidad, setPrivacidad] = useState(false);
   const set = (patch: Partial<typeof form>) => setForm((f) => ({ ...f, ...patch }));
-  const puedeGoogle = terminos && privacidad && form.negocio.trim().length >= 2 && form.rubro.trim().length >= 2 && form.nombre.trim().length >= 2;
 
   const registrar = useMutation({
     mutationFn: () =>
@@ -199,19 +198,7 @@ export function Registro() {
     },
   });
   const google = useMutation({
-    mutationFn: () =>
-      api<{ url: string }>('/cuenta/google/iniciar', {
-        method: 'POST',
-        body: {
-          modo: 'registro',
-          negocio: form.negocio,
-          rubro: form.rubro,
-          nombre: form.nombre,
-          planId: form.planId || undefined,
-          aceptaTerminos: true,
-          aceptaPrivacidad: true,
-        },
-      }),
+    mutationFn: () => api<{ url: string }>('/cuenta/google/iniciar', { method: 'POST', body: { modo: 'registro' } }),
     onSuccess: ({ url }) => location.assign(url),
   });
   const enviar = (e: FormEvent) => {
@@ -226,7 +213,10 @@ export function Registro() {
         <h1>
           Creá tu cuenta y <span>empezá a explorar</span>
         </h1>
-        <p className="auth-sub">Entrá al panel en un minuto. La IA se habilita cuando pagás con Mercado Pago.</p>
+        <p className="auth-sub">Con Google usamos tu nombre y tu email. El negocio y el plan los completás después, y la cuenta queda sin plan.</p>
+        <ErrorMsg error={google.error} />
+        <BotonGoogle pending={google.isPending} onClick={() => google.mutate()} />
+        <p className="auth-separador">o con email</p>
         <label>
           Plan
           <span className="auth-control">
@@ -280,12 +270,10 @@ export function Registro() {
           </Link>
           .
         </Check>
-        <ErrorMsg error={registrar.error ?? google.error} />
+        <ErrorMsg error={registrar.error} />
         <button className="auth-submit" type="submit" disabled={registrar.isPending || !terminos || !privacidad}>
           {registrar.isPending ? 'Creando cuenta...' : 'Crear mi cuenta'}
         </button>
-        <p className="auth-separador">o</p>
-        <BotonGoogle pending={google.isPending} disabled={!puedeGoogle} onClick={() => google.mutate()} />
         <p className="auth-cambio">
           ¿Ya tenés cuenta? <Link to="/ingresar">Iniciá sesión</Link>
         </p>
