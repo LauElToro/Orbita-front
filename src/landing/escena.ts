@@ -34,7 +34,7 @@ export const ESCENAS = [
   { key: 'intro', n: '01', label: 'Órbita', dur: 9 },
   { key: 'ia', n: '02', label: 'Qué es la IA', dur: 14 },
   { key: 'negocio', n: '03', label: 'Tu negocio', dur: 11 },
-  { key: 'demo', n: '04', label: 'Demo chat', dur: 15 },
+  { key: 'demo', n: '04', label: 'Un ejemplo', dur: 15 },
   { key: 'canales', n: '05', label: 'Canales', dur: 12 },
   { key: 'planes', n: '06', label: 'Planes', dur: 17 },
 ];
@@ -131,19 +131,41 @@ const NOTE = { E2: 82.41, B2: 123.47, E3: 164.81, FS3: 185, GS3: 207.65, E4: 329
 interface Tono { f: number; to?: number; t?: number; a?: number; d?: number; g?: number; type?: OscillatorType; wet?: number }
 interface Ruido { t?: number; dur?: number; type?: BiquadFilterType; q?: number; f?: number; f2?: number; g?: number; a?: number; wet?: number }
 
+/** Volumen general: el sonido acompaña, no protagoniza. */
+const VOLUMEN = 0.5;
+
 function crearAudio() {
   let ctx: AudioContext | null = null;
   let master: GainNode, bus: GainNode, revIn: GainNode, noiseBuf: AudioBuffer, padG: GainNode, padF: BiquadFilterNode;
   let enabled = true;
   try { enabled = localStorage.getItem('orbita-sound') !== 'off'; } catch { /* sin almacenamiento */ }
-  let prevScene = -1, prevT = 0, lastBeat = -1, lastSpark = 0, lastType = 0;
+  let prevScene = -1, prevT = 0, lastSpark = 0, lastType = 0, sonando = false;
   const subs = new Set<() => void>();
+  // iOS < 17 (sin audioSession): un <audio> sonando pasa la sesión a "reproducción" y el switch de silencio deja de mutear Web Audio.
+  const ios = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.userAgent.includes('Macintosh') && navigator.maxTouchPoints > 1);
+  let puente: HTMLAudioElement | null = null;
+  function silencioWav() {
+    const n = 4000, b = new DataView(new ArrayBuffer(44 + n)), txt = (o: number, s: string) => { for (let i = 0; i < s.length; i++) b.setUint8(o + i, s.charCodeAt(i)); };
+    txt(0, 'RIFF'); b.setUint32(4, 36 + n, true); txt(8, 'WAVEfmt '); b.setUint32(16, 16, true); b.setUint16(20, 1, true); b.setUint16(22, 1, true);
+    b.setUint32(24, 8000, true); b.setUint32(28, 8000, true); b.setUint16(32, 1, true); b.setUint16(34, 8, true); txt(36, 'data'); b.setUint32(40, n, true);
+    for (let i = 0; i < n; i++) b.setUint8(44 + i, 128);
+    return URL.createObjectURL(new Blob([b.buffer], { type: 'audio/wav' }));
+  }
+  function puenteIOS(on: boolean) {
+    if (!ios || 'audioSession' in navigator) return;
+    if (on && !puente) { puente = new Audio(silencioWav()); puente.loop = true; puente.setAttribute('playsinline', ''); puente.setAttribute('x-webkit-airplay', 'deny'); }
+    if (!puente) return;
+    if (on) void puente.play().catch(() => {}); else puente.pause();
+  }
   function init() {
     const AC = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!AC) return false;
+    // iOS: sin esto, el switch de silencio apaga Web Audio aunque el volumen esté alto.
+    const sesion = (navigator as unknown as { audioSession?: { type: string } }).audioSession;
+    if (sesion) try { sesion.type = 'playback'; } catch { /* no soportado */ }
     const c = new AC(); ctx = c;
     const comp = c.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 4;
-    master = c.createGain(); master.gain.value = enabled ? 0.9 : 0; bus = c.createGain();
+    master = c.createGain(); master.gain.value = 0; bus = c.createGain();
     bus.connect(comp); comp.connect(master); master.connect(c.destination);
     const rev = c.createConvolver(), len = Math.floor(c.sampleRate * 2.6), ir = c.createBuffer(2, len, c.sampleRate);
     for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3.2); }
@@ -173,25 +195,23 @@ function crearAudio() {
     src.connect(fl); fl.connect(gn); out(gn, o.wet == null ? 0.2 : o.wet); src.start(t0, Math.random()); src.stop(t0 + dur + 0.05);
   }
   const bell = (f: number, t = 0, gn = 0.07, d = 1.5) => { tone({ f, t, g: gn, d, wet: 0.5 }); tone({ f: f * 2.01, t, g: gn * 0.3, d: d * 0.5, wet: 0.5 }); };
-  const kick = (gn = 0.14) => tone({ f: 120, to: 44, a: 0.002, d: 0.26, g: gn, wet: 0.04 });
   const S = {
-    kick,
     blip: (f = 1400, gn = 0.045, t = 0) => tone({ f, t, a: 0.002, d: 0.08, g: gn, wet: 0.15 }),
     tick: () => noise({ dur: 0.025, g: 0.03, f: 3000 + Math.random() * 900, q: 4, wet: 0.02 }),
     whoosh: (dur = 1, gn = 0.09) => noise({ dur, g: gn, f: 280, f2: 2600, q: 1.4, a: dur * 0.55, wet: 0.3 }),
     riser: (dur = 1.2) => noise({ dur, g: 0.07, type: 'highpass', f: 400, f2: 7000, q: 0.8, a: dur * 0.9, wet: 0.35 }),
-    impact: (gn = 0.4) => { tone({ f: 90, to: 36, a: 0.003, d: 1, g: gn, wet: 0.3 }); noise({ dur: 0.8, g: gn * 0.3, type: 'lowpass', f: 2200, f2: 120, q: 0.5, wet: 0.6 }); },
+    impact: (gn = 0.3) => { tone({ f: 90, to: 36, a: 0.003, d: 1, g: gn, wet: 0.3 }); noise({ dur: 0.8, g: gn * 0.3, type: 'lowpass', f: 2200, f2: 120, q: 0.5, wet: 0.6 }); },
     pop: () => tone({ f: 520, to: 1040, a: 0.004, d: 0.12, g: 0.06, wet: 0.2 }),
     chirp: () => [NOTE.B4, NOTE.E5, NOTE.GS5].forEach((f, i) => tone({ f, t: i * 0.055, a: 0.003, d: 0.12, g: 0.05, type: 'triangle' })),
     signature: (full = true) => { const sq = full ? [NOTE.E5, NOTE.B5, NOTE.E6, NOTE.GS6] : [NOTE.B5, NOTE.E6]; sq.forEach((f, i) => bell(f, i * 0.13, 0.07, full && i === sq.length - 1 ? 2.6 : 1.4)); if (full) tone({ f: NOTE.E2, a: 0.08, d: 2.6, g: 0.15, wet: 0.4 }); },
-    star: (i: number) => bell([NOTE.E5, NOTE.FS5, NOTE.GS5, NOTE.B5, NOTE.CS6][i % 5], 0, 0.055, 0.9),
-    success: () => [NOTE.E5, NOTE.GS5, NOTE.B5, NOTE.E6].forEach((f) => bell(f, 0, 0.04, 1.8)),
-    node: (i: number) => { bell([NOTE.E4, NOTE.GS4, NOTE.B4, NOTE.E5, NOTE.GS5][i % 5], 0, 0.065, 1.2); kick(0.12); },
-    sparkle: () => tone({ f: [NOTE.E6, NOTE.GS6, NOTE.B5, NOTE.CS6][(Math.random() * 4) | 0], a: 0.002, d: 0.25, g: 0.01 + Math.random() * 0.01, wet: 0.6 }),
+    star: (i: number) => bell([NOTE.E5, NOTE.FS5, NOTE.GS5, NOTE.B5, NOTE.CS6][i % 5], 0, 0.035, 0.9),
+    success: () => [NOTE.E5, NOTE.GS5, NOTE.B5, NOTE.E6].forEach((f) => bell(f, 0, 0.03, 1.8)),
+    node: (i: number) => bell([NOTE.E4, NOTE.GS4, NOTE.B4, NOTE.E5, NOTE.GS5][i % 5], 0, 0.05, 1.2),
+    sparkle: () => tone({ f: [NOTE.E6, NOTE.GS6, NOTE.B5, NOTE.CS6][(Math.random() * 4) | 0], a: 0.002, d: 0.25, g: 0.006 + Math.random() * 0.006, wet: 0.6 }),
   };
   const CUES: [number, () => void][][] = [
     [[0.05, () => S.impact(0.25)], [3.5, () => S.signature(true)], [4.1, () => S.riser(0.9)], [5, () => { S.impact(0.45); S.whoosh(1.6, 0.14); }], [6.6, () => bell(NOTE.B4, 0, 0.05, 2.2)]],
-    [[0.6, () => S.whoosh(0.9)], [1.2, () => S.pop()], ...TOK_IN.map((x, i): [number, () => void] => [3 + i * 0.18, () => S.blip(1100 + i * 110)]), ...TOK_IN.map((x, i): [number, () => void] => [5.9 + i * 0.38, () => S.blip(700, 0.03)]), ...TOK_OUT.map((x, i): [number, () => void] => [8.4 + i * 0.4, () => S.star(i)]), [12.2, () => S.success()]],
+    [[0.6, () => S.whoosh(0.9)], [1.2, () => S.pop()], ...TOK_IN.map((x, i): [number, () => void] => [3 + i * 0.18, () => S.blip(1100 + i * 110, 0.02)]), ...TOK_OUT.map((x, i): [number, () => void] => [8.4 + i * 0.4, () => S.star(i)]), [12.2, () => S.success()]],
     [[0.4, () => S.whoosh(1.2)], ...DOCS.map((x, i): [number, () => void] => [DOC_T(i) + 0.75, () => S.node(i)]), [9.3, () => { S.success(); S.signature(false); }]],
     [[0.5, () => S.whoosh(1)], [1.8, () => S.pop()], [3.8, () => S.chirp()], [6, () => S.pop()], [7.8, () => S.chirp()], [10.2, () => S.success()], [11.5, () => S.blip(1500)]],
     [[0.4, () => S.whoosh(1)], [1, () => S.blip(1200)], [1.3, () => S.blip(1400)], [1.6, () => S.blip(1600)], [5.6, () => S.blip(500, 0.06)], [6.6, () => S.impact(0.22)], [7.4, () => S.signature(false)], [8.6, () => S.blip(1300)], [9.7, () => S.blip(1450)], [10.8, () => S.blip(1600)]],
@@ -200,33 +220,43 @@ function crearAudio() {
   function update(E: Snap & { clock: number }) {
     const c = ctx;
     if (!c) return;
+    // En pausa se baja el volumen en vez de suspender el contexto: iOS solo deja reanudarlo dentro de un toque.
     const run = enabled && E.started && E.playing;
-    if (run && c.state === 'suspended') void c.resume(); else if (!run && c.state === 'running') void c.suspend();
+    if (run !== sonando) { sonando = run; master.gain.setTargetAtTime(run ? VOLUMEN : 0, c.currentTime, 0.08); puenteIOS(run); }
+    if (run && c.state !== 'running') void c.resume().catch(() => {});
     if (!run) return;
     const s = E.scene, t = E.t;
-    if (s !== prevScene) { if (prevScene !== -1 || s !== 0) { S.whoosh(1, 0.08); S.kick(0.14); } prevScene = s; prevT = -0.001; lastBeat = -1; }
+    if (s !== prevScene) { if (prevScene !== -1 || s !== 0) S.whoosh(1, 0.05); prevScene = s; prevT = -0.001; }
     if (t < prevT || t - prevT > 0.6) prevT = t - 0.001;
     for (const [ct, fn] of CUES[s]) if (ct > prevT && ct <= t) { try { fn(); } catch { /* nunca romper el render */ } }
-    if (s >= 1 && s <= 4) { const b = Math.floor(t / (60 / 88)); if (b !== lastBeat) { lastBeat = b; S.kick(b % 4 === 0 ? 0.14 : 0.08); } }
-    if (s === 0 && t > 0.3 && t < 3.5 && E.clock - lastSpark > 0.08) { lastSpark = E.clock; if (Math.random() < 0.7) S.sparkle(); }
-    if (s === 3 && TYPING.some(([a, b]) => t > a && t < b) && E.clock - lastType > 0.09) { lastType = E.clock; S.tick(); }
-    padG.gain.setTargetAtTime(s === 0 ? 0.03 + 0.04 * seg(t, 3.4, 6.4) : 0.05, c.currentTime, 0.4);
+    if (s === 0 && t > 0.3 && t < 3.5 && E.clock - lastSpark > 0.12) { lastSpark = E.clock; if (Math.random() < 0.4) S.sparkle(); }
+    if (s === 3 && TYPING.some(([a, b]) => t > a && t < b) && E.clock - lastType > 0.12) { lastType = E.clock; S.tick(); }
+    padG.gain.setTargetAtTime(s === 0 ? 0.02 + 0.03 * seg(t, 3.4, 6.4) : 0.025, c.currentTime, 0.4);
     padF.frequency.setTargetAtTime(s === 0 ? 280 + 900 * seg(t, 0.3, 6.5) : s === 5 ? 900 + 1400 * seg(t, 10, 12.5) : 950, c.currentTime, 0.4);
     prevT = t;
   }
   return {
     get enabled() { return enabled; },
-    unlock() { if (!ctx) init(); },
+    /** Tiene que correr dentro de un gesto del usuario (toque, clic o tecla): es lo que habilita el audio en iOS. */
+    unlock() {
+      if (!ctx && !init()) return;
+      const c = ctx!;
+      if (c.state !== 'running') void c.resume().catch(() => {});
+      const silencio = c.createBufferSource(); silencio.buffer = c.createBuffer(1, 1, 22050); silencio.connect(c.destination); silencio.start(0);
+      if (enabled) puenteIOS(true);
+    },
     toggle() {
       enabled = !enabled;
+      if (enabled) puenteIOS(true);
       try { localStorage.setItem('orbita-sound', enabled ? 'on' : 'off'); } catch { /* sin almacenamiento */ }
-      if (!ctx) init();
-      if (ctx) master.gain.setTargetAtTime(enabled ? 0.9 : 0, ctx.currentTime, 0.05);
       subs.forEach((f) => f());
     },
     subscribe(f: () => void) { subs.add(f); },
     update,
-    cerrar() { subs.clear(); if (ctx) void ctx.close(); ctx = null; },
+    cerrar() {
+      subs.clear(); if (ctx) void ctx.close(); ctx = null;
+      if (puente) { puente.pause(); URL.revokeObjectURL(puente.src); puente = null; }
+    },
   };
 }
 
@@ -278,9 +308,19 @@ export function montarPresentacion(root: HTMLElement): Presentacion {
   const lienzo = cv.getContext('2d');
   const g = lienzo as CanvasRenderingContext2D;
   let W = 1, H = 1, DPR = 1, UI = 1, aspect = 1, narrow = false;
-  const cam = { pos: [0, 2, 40] as V3, tgt: [0, 0, 0] as V3, epos: [0, 2, 40] as V3, fov: 32, f: [0, 0, -1] as V3, r: [1, 0, 0] as V3, u: [0, 1, 0] as V3, focal: 1, cx: 0, cy: 0 };
+  const cam = { pos: [0, 2, 40] as V3, tgt: [0, 0, 0] as V3, epos: [0, 2, 40] as V3, fov: 32, f: [0, 0, -1] as V3, r: [1, 0, 0] as V3, u: [0, 1, 0] as V3, focal: 1, cx: 0, cy: 0, zoom: 1 };
   let blend: { pos: V3; tgt: V3 } | null = null;
   let anchors: Record<string, XY> = {};
+  /** Franja vertical libre para la animación: entre la barra superior y el texto (o el bloque final). */
+  const hueco = { top: 0, bottom: 1 };
+  let cuadro = 0;
+  function medirHueco(cierre: boolean) {
+    const base = root.getBoundingClientRect();
+    const barra = root.querySelector('.topbar')?.getBoundingClientRect();
+    const debajo = (cierre ? $('final') : root.querySelector('.columna'))?.getBoundingClientRect();
+    hueco.top = (barra ? barra.bottom - base.top : 0) + 12;
+    hueco.bottom = Math.max(hueco.top + 1, (debajo ? debajo.top - base.top : H) - 16);
+  }
   function P(p: V3): Pt | null {
     const d = sub3(p, cam.epos), z = dot3(d, cam.f);
     if (z < 0.5) return null;
@@ -293,27 +333,28 @@ export function montarPresentacion(root: HTMLElement): Presentacion {
       case 0: return camKeys([{ t: 0, pos: [0, 2, 42], tgt: [0, 0, 0] }, { t: 9, pos: [4, 4, 35], tgt: [0, 0, 0] }], t);
       case 1: return camKeys([{ t: 0, pos: [-3, 3, 38], tgt: [0, 0.4, 0] }, { t: 14, pos: [3, 4.5, 34], tgt: [0, 0.4, 0] }], t);
       case 2: return camKeys([{ t: 0, pos: [7, 7, 37], tgt: [0, 0, 0] }, { t: 11, pos: [-5, 5, 34], tgt: [0, 0, 0] }], t);
-      case 3: return narrow ? camKeys([{ t: 0, pos: [0, 4, 44], tgt: [0, 0, 0] }, { t: 15, pos: [3, 5, 40], tgt: [0, 0, 0] }], t) : camKeys([{ t: 0, pos: [13, 3, 41], tgt: [9.5, 0, 0] }, { t: 15, pos: [11, 2, 37], tgt: [9, 0, 0] }], t);
+      case 3: return camKeys([{ t: 0, pos: [0, 4, 44], tgt: [0, 0, 0] }, { t: 15, pos: [3, 5, 40], tgt: [0, 0, 0] }], t);
       case 4: return camKeys([{ t: 0, pos: [-2, 5, 40], tgt: [0, 1, 0] }, { t: 12, pos: [3, 6.5, 36], tgt: [0, 1, 0] }], t);
-      default: return camKeys([{ t: 0, pos: [-6, 4, 46], tgt: [0, 0, 0] }, { t: 11, pos: [-2, 2, 44], tgt: [0, -1, 0] }, { t: 13.2, pos: [0, -3.5, 38], tgt: [0, -5.8, 0] }, { t: 17, pos: [1.5, -3.2, 36], tgt: [0, -5.8, 0] }], t);
+      default: return camKeys([{ t: 0, pos: [-6, 4, 46], tgt: [0, 0, 0] }, { t: 11, pos: [-2, 2, 44], tgt: [0, -1, 0] }, { t: 13.2, pos: [0, 2.3, 38], tgt: [0, 0, 0] }, { t: 17, pos: [1.5, 2.6, 36], tgt: [0, 0, 0] }], t);
     }
   }
+  /** Llamadas ancladas a la escena. Siempre hacia la derecha, lejos de la columna de texto; en pantallas angostas no hay lugar. */
   function calloutsFor(s: Snap): Llamada[] {
     const t = s.t, c: Llamada[] = [];
+    if (narrow || H <= 500) return c;
     if (s.scene === 1) {
       if (t > 1.4 && t < 3) c.push({ k: 'm', anchor: 'msgIn', title: 'Mensaje del cliente', sub: 'texto libre' });
-      if (t > 3.8 && t < 5.3) c.push({ k: 'tk', anchor: 'token', title: 'Tokens', sub: 'piezas de texto', side: 'left' });
       if (t > 5.9 && t < 8.3) c.push({ k: 'md', anchor: 'core', title: 'Modelo de lenguaje', sub: 'relaciona las piezas' });
-      if (t > 12.7) c.push({ k: 'rp', anchor: 'reply', title: 'Respuesta', sub: 'palabra por palabra', side: 'left' });
+      if (t > 12.7) c.push({ k: 'rp', anchor: 'reply', title: 'Respuesta', sub: 'palabra por palabra' });
     }
     if (s.scene === 2 && t > 9.4) c.push({ k: 'ok', anchor: 'core', title: 'Lista para responder', sub: 'con la info de tu negocio' });
     if (s.scene === 3) {
-      if (t > 4.2 && t < 6) c.push({ k: 'p1', anchor: 'phone', title: 'Usa tu información', sub: 'según tus horarios', side: 'left' });
-      if (t > 11.4) c.push({ k: 'p2', anchor: 'phone', title: 'Turno agendado', sub: 'sin que toques el teléfono', side: 'left' });
+      if (t > 4.2 && t < 6) c.push({ k: 'p1', anchor: 'phone', title: 'Usa tu información', sub: 'según tus horarios' });
+      if (t > 11.4) c.push({ k: 'p2', anchor: 'phone', title: 'Turno agendado', sub: 'sin que toques el teléfono' });
     }
     if (s.scene === 4) {
       if (t > 2.2 && t < 5.4) c.push({ k: 'c1', anchor: 'core', title: 'Una sola IA', sub: 'atiende los 3 canales' });
-      if (t > 7.4 && t < 11.6) c.push({ k: 'c2', anchor: 'vos', title: 'Te pasa la charla', sub: 'reclamos o pedido de persona', side: narrow ? 'left' : '' });
+      if (t > 7.4 && t < 11.6) c.push({ k: 'c2', anchor: 'vos', title: 'Te pasa la charla', sub: 'reclamos o pedido de persona' });
     }
     return c;
   }
@@ -348,7 +389,7 @@ export function montarPresentacion(root: HTMLElement): Presentacion {
   function resize() {
     W = root.clientWidth || 1; H = root.clientHeight || 1; DPR = Math.min(window.devicePixelRatio || 1, 2);
     cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
-    aspect = W / H; narrow = W <= 860; UI = clamp(Math.min(W / 420, H / 780), 0.72, 1.12);
+    aspect = W / H; narrow = aspect <= 1 || (W <= 860 && aspect <= 1.5); cuadro = 0; UI = clamp(Math.min(W / 420, H / 780), 0.72, 1.12);
     const ph = $('phoneWrap').offsetHeight; if (ph) $('phone').style.fontSize = (ph / 40).toFixed(2) + 'px';
     if (lienzo) buildLogo();
   }
@@ -420,7 +461,7 @@ export function montarPresentacion(root: HTMLElement): Presentacion {
   function drawSystem(a: number, o: { net: number; act: number; arc: number; pulse: number; ring2: number }, clock: number): Pt | null {
     if (a <= 0.01) return null;
     const c = P([0, 0, 0]); if (!c) return null;
-    const lw = Math.max(1.6, c.s * 0.2);
+    const lw = clamp(c.s * 0.11, 1.4, 3);
     DECOR.forEach((R) => strokeRing(R, 'rgba(47,91,232,.13)', 1.2, a));
     if (o.ring2) strokeRing(RING2R(), 'rgba(10,10,14,.12)', 1, a * o.ring2);
     // red interna (el "modelo")
@@ -442,8 +483,8 @@ export function montarPresentacion(root: HTMLElement): Presentacion {
     g.save(); g.globalAlpha = a; g.strokeStyle = INK; g.lineWidth = lw;
     g.beginPath(); g.arc(c.x, c.y, CORE_R * c.s, 0, TAU); g.stroke(); g.restore();
     strokeRing(MAIN, INK, lw, a);
-    const sp = P(ringPt(MAIN, clock * 0.5 + 5.5));
-    if (sp) { g.save(); g.globalAlpha = a; g.fillStyle = BLUE_HI; g.beginPath(); g.arc(sp.x, sp.y, sp.s * 0.95, 0, TAU); g.fill(); g.restore(); }
+    const sp = P(ringPt(MAIN, clock * 0.25 + 5.5));
+    if (sp) { g.save(); g.globalAlpha = a; g.fillStyle = BLUE_HI; g.beginPath(); g.arc(sp.x, sp.y, Math.min(sp.s * 0.42, 9), 0, TAU); g.fill(); g.restore(); }
     if (o.arc > 0.001) {
       g.save(); g.globalAlpha = a; g.strokeStyle = BLUE; g.lineWidth = lw * 1.6; g.lineCap = 'round';
       g.beginPath(); g.arc(c.x, c.y, (CORE_R + 0.75) * c.s, -Math.PI / 2, -Math.PI / 2 + TAU * Math.min(1, o.arc)); g.stroke();
@@ -466,8 +507,21 @@ export function montarPresentacion(root: HTMLElement): Presentacion {
     cam.epos = [cam.tgt[0] + (cam.pos[0] - cam.tgt[0]) * m + Math.sin(clock * 0.47) * 0.25 * hand, cam.tgt[1] + (cam.pos[1] - cam.tgt[1]) * m + Math.sin(clock * 0.31 + 1) * 0.18 * hand, cam.tgt[2] + (cam.pos[2] - cam.tgt[2]) * m];
     cam.f = norm3(sub3(cam.tgt, cam.epos)); cam.r = norm3(cross3(cam.f, [0, 1, 0])); cam.u = cross3(cam.r, cam.f);
     cam.focal = (H / 2) / Math.tan(cam.fov * D2R / 2);
-    const hasSide = !narrow && aspect > 1.25 && s >= 1 && s <= 4;
-    cam.cx = W / 2 - (hasSide ? W * 0.07 : 0); cam.cy = narrow ? H * 0.4 : H * 0.48;
+    // Escenas con texto: en escritorio la animación va a la derecha de la columna; en angosto, en el hueco entre la barra y el texto.
+    // En el cierre, el logo va en el hueco de arriba del bloque final, achicado para que no pise nada.
+    const conTexto = started && ((s >= 1 && s <= 4) || (s === 0 && t > 6.4));
+    const cierre = started && s === 5 && t > 11;
+    let cx = conTexto && !narrow ? W * 0.66 : W / 2, cy = narrow ? H * 0.4 : H * 0.48, zoom = 1;
+    if (cierre || (narrow && conTexto)) {
+      if (cuadro++ % 12 === 0) medirHueco(cierre);
+      const unidad = cam.focal / Math.max(1, dot3(sub3(cam.tgt, cam.epos), cam.f));
+      const alto = cierre ? 5 : s === 1 || s === 4 ? 9.5 : 6.5, ancho = cierre ? 8.6 : 9.2;
+      cy = (hueco.top + hueco.bottom) / 2;
+      zoom = clamp(Math.min((hueco.bottom - hueco.top) / 2 / (alto * unidad), (W * 0.46) / (ancho * unidad)), 0.12, cierre ? 1 : 1.15);
+    } else cuadro = 0;
+    const suave = cam.cx === 0 || reduceMotion ? 1 : 0.06;
+    cam.cx += (cx - cam.cx) * suave; cam.cy += (cy - cam.cy) * suave; cam.zoom += (zoom - cam.zoom) * suave;
+    cam.focal *= cam.zoom;
     anchors = {};
 
     g.setTransform(DPR, 0, 0, DPR, 0, 0);
@@ -484,15 +538,16 @@ export function montarPresentacion(root: HTMLElement): Presentacion {
     else if (s === 0) sysA = seg(t, 6.9, 8.3);
     else if (s === 1) { o.net = seg(t, 4.6, 5.6) * (1 - seg(t, 12.8, 13.8)); o.act = seg(t, 5.4, 6) * (1 - seg(t, 11.9, 12.5)); }
     else if (s === 2) { o.ring2 = seg(t, 0.2, 1); let pr = 0; DOCS.forEach((d, i) => { pr += ease(seg(t, DOC_T(i), DOC_T(i) + 0.9)); }); o.arc = pr / DOCS.length; o.pulse = t > 9.3 ? seg(t, 9.3, 10.4) % 1 : 0; }
-    else if (s === 3) { sysA = narrow ? 0.3 : 1; o.net = 0.6; o.act = (t > 2.6 && t < 3.8) || (t > 6.8 && t < 7.8) ? 1 : 0.15; }
+    else if (s === 3) { sysA = 0.3; o.net = 0.6; o.act = (t > 2.6 && t < 3.8) || (t > 6.8 && t < 7.8) ? 1 : 0.15; }
     else if (s === 4) { o.ring2 = seg(t, 0.2, 1); o.net = 0.5; o.act = 0.35; o.pulse = t > 6.5 && t < 7.6 ? seg(t, 6.5, 7.6) : 0; }
-    else if (s === 5) sysA = lerp(0.07, 1, ease(seg(t, 11, 12.6)));
+    else if (s === 5) sysA = lerp(0.07, 1, ease(seg(t, 11, 12.6))) * (cierre ? clamp((hueco.bottom - hueco.top - 50) / 50) : 1);
     const c = drawSystem(sysA, o, clock);
     if (c) anchors.core = { x: c.x + CORE_R * c.s * 0.72, y: c.y - CORE_R * c.s * 0.72 };
 
     /* escena 2: cómo responde una IA */
     if (started && s === 1 && c) {
-      const pIn = P(narrow ? [0, 8.6, 0] : [-10, 5.6, 0]);
+      // Flujo vertical: el mensaje entra arriba, pasa por el modelo y la respuesta sale abajo.
+      const pIn = P(narrow ? [0, 8.6, 0] : [0, 7.4, 0]);
       if (pIn) {
         const inA = seg(t, 0.6, 1.2) * (1 - seg(t, 3, 3.4)), slide = (1 - easeOut(seg(t, 0.6, 1.6))) * -60;
         const w = chip(pIn.x + slide, pIn.y, '¿Tienen turno para corte mañana a la tarde?', { a: inA, fill: INK, col: '#fff', stroke: INK, px: 14 });
@@ -511,7 +566,7 @@ export function montarPresentacion(root: HTMLElement): Presentacion {
       const ws = TOK_OUT.map((w) => g.measureText(w).width + px * 1.7), gap = 6 * UI, maxW = Math.min(narrow ? W - 40 : 330 * UI, W - 40);
       const rows: number[][] = [[]]; let rw = 0;
       ws.forEach((w, i) => { if (rw + w > maxW && rows[rows.length - 1].length) { rows.push([]); rw = 0; } rows[rows.length - 1].push(i); rw += w + gap; });
-      const an = P(narrow ? [0, -6.8, 0] : [6.2, 5.7, 0]);
+      const an = P([0, -6.8, 0]);
       if (an) {
         const rh = px * 2.15 + gap, tgt: XY[] = [], y0 = an.y - (rows.length - 1) * rh / 2; let bx0 = 1e9, bx1 = -1e9;
         rows.forEach((row, ri) => { const tot = row.reduce((s2, i) => s2 + ws[i] + gap, -gap); let x = an.x - tot / 2; bx0 = Math.min(bx0, x); bx1 = Math.max(bx1, x + tot); row.forEach((i) => { tgt[i] = { x: x + ws[i] / 2, y: y0 + ri * rh }; x += ws[i] + gap; }); });
@@ -522,7 +577,7 @@ export function montarPresentacion(root: HTMLElement): Presentacion {
           const k = easeOut(seg(t, te, te + 0.7));
           chip(lerp(c.x, tgt[i].x, k), lerp(c.y, tgt[i].y, k), tok, { a: seg(t, te, te + 0.15), sc: 0.4 + 0.6 * k, px: 15, fill: mg > 0.5 ? null : '#fff', col: mg > 0.5 ? '#fff' : INK, stroke: `rgba(10,10,14,${0.16 * (1 - mg)})` });
         });
-        if (mg > 0.9) anchors.reply = { x: bx0 - 4, y: y0 - rh / 2 };
+        if (mg > 0.9) anchors.reply = { x: bx1 + 4, y: y0 - rh / 2 };
       }
     }
 
@@ -540,17 +595,7 @@ export function montarPresentacion(root: HTMLElement): Presentacion {
     /* escena 4: haz entre el teléfono y la IA */
     if (started && s === 3) {
       const base = root.getBoundingClientRect(), pr = $('phoneWrap').getBoundingClientRect();
-      const r = { left: pr.left - base.left, top: pr.top - base.top, height: pr.height };
-      anchors.phone = { x: r.left + 6, y: r.top + r.height * 0.3 };
-      if (c && !narrow) {
-        const toCore = (t > 1.8 && t < 2.8) || (t > 6 && t < 7), toPhone = (t > 3.2 && t < 4.2) || (t > 7.3 && t < 8.3) || (t > 9.8 && t < 10.6);
-        if (toCore || toPhone) {
-          const A = { x: r.left, y: r.top + r.height * 0.55 }, B = { x: c.x + CORE_R * c.s, y: c.y }, C = { x: (A.x + B.x) / 2, y: Math.min(A.y, B.y) - 70 };
-          g.save(); g.fillStyle = BLUE;
-          for (let i = 0; i < 14; i++) { let u = (clock * 0.9 + i / 14) % 1; if (toPhone) u = 1 - u; const q = quad(A, B, C, u); g.globalAlpha = Math.sin(u * Math.PI) * 0.9; g.beginPath(); g.arc(q.x, q.y, 3, 0, TAU); g.fill(); }
-          g.restore();
-        }
-      }
+      anchors.phone = { x: pr.right - base.left - 6, y: pr.top - base.top + pr.height * 0.3 };
     }
     $('phone').style.transform = narrow ? 'none' : `rotateY(${(-9 + Math.sin(clock * 0.6) * 3).toFixed(2)}deg) rotateX(${(2 + Math.sin(clock * 0.45)).toFixed(2)}deg)`;
 
@@ -562,7 +607,7 @@ export function montarPresentacion(root: HTMLElement): Presentacion {
       g.restore();
       sats.forEach((p, j) => { if (p) chip(p.x, p.y, CHANNELS[j], { a: seg(t, 0.4 + j * 0.3, 1 + j * 0.3), sc: clamp(p.s / c.s, 0.8, 1.2), px: 14, w: 600, dot: BLUE }); });
       // un reclamo llega → la IA te pasa la charla
-      const vos = P(narrow ? [0, 8.6, 0] : [7, 7.2, 0]);
+      const vos = P(narrow ? [0, 8.6, 0] : [0, 7.4, 0]);
       const s0 = sats[0];
       if (s0 && t > 5.6 && t < 6.7) { const u = ease(seg(t, 5.6, 6.6)), q = quad(s0, c, { x: (s0.x + c.x) / 2, y: (s0.y + c.y) / 2 - 50 }, u); chip(q.x, q.y, 'Reclamo', { px: 12, fill: INK, col: '#fff', stroke: INK, w: 600, a: 1 - seg(t, 6.5, 6.7) }); }
       if (vos && t > 6.6) {
@@ -605,11 +650,8 @@ export function montarPresentacion(root: HTMLElement): Presentacion {
     root.classList.toggle('dark', !live || (sc === 0 && t < 5.8));
     root.classList.toggle('paused', live && !s.playing);
     $('start').classList.toggle('on', !live);
-    $('metaLbl').textContent = live ? `${ESCENAS[sc].n} / 06 · ${ESCENAS[sc].label}` : 'Listo';
-    $('rec').dataset.on = s.playing ? '1' : '0';
     if (playState !== s.playing) { playState = s.playing; $('bPlay').innerHTML = s.playing ? ICON.pause : ICON.play; $('bPlay').setAttribute('aria-label', s.playing ? 'Pausar' : 'Reproducir'); }
     segEls.forEach((e, i) => { e.classList.toggle('on', live && i === sc); e.classList.toggle('done', live && i < sc); });
-    $('cIA').classList.toggle('on', live && sc === 1); $('cChat').classList.toggle('on', live && sc === 3);
     $('introTag').classList.toggle('on', live && sc === 0 && t > 3.5 && t < 4.9);
 
     /* titular */
@@ -666,7 +708,7 @@ export function montarPresentacion(root: HTMLElement): Presentacion {
   function renderSound() {
     const on = audio.enabled;
     $('bSound').innerHTML = on ? ICON.on : ICON.off; $('bSound').classList.toggle('off', !on); $('bSound').setAttribute('aria-pressed', String(on));
-    $('sSound').innerHTML = (on ? ICON.on : ICON.off) + `<span>${on ? 'Con sonido · mejor con auriculares' : 'Sonido desactivado · tocá para activarlo'}</span>`; $('sSound').classList.toggle('on', on);
+    $('sSound').innerHTML = (on ? ICON.on : ICON.off) + `<span>${on ? 'Sonido suave · podés silenciarlo cuando quieras' : 'Sin sonido · tocá para activarlo'}</span>`; $('sSound').classList.toggle('on', on);
   }
   engine.subs.add(render); audio.subscribe(renderSound);
 
@@ -679,8 +721,7 @@ export function montarPresentacion(root: HTMLElement): Presentacion {
   /* controles */
   const on = (id: string, fn: () => void) => $(id).addEventListener('click', fn);
   on('bStart', () => engine.goTo(0)); on('sIA', () => engine.goTo(1)); on('sChat', () => engine.goTo(3));
-  on('bRestart', () => engine.goTo(0)); on('bPrev', () => engine.prev()); on('bNext', () => engine.next()); on('bPlay', () => engine.toggle());
-  on('cIA', () => engine.goTo(1)); on('cChat', () => engine.goTo(3)); on('replay', () => engine.goTo(0));
+  on('bPrev', () => engine.prev()); on('bNext', () => engine.next()); on('bPlay', () => engine.toggle()); on('replay', () => engine.goTo(0));
   on('bSound', () => audio.toggle()); on('sSound', () => audio.toggle());
   /** Los atajos solo aplican mientras la presentación ocupa la mayor parte de la pantalla. */
   const enVista = () => { const r = root.getBoundingClientRect(); return r.bottom > r.height * 0.5; };
@@ -692,10 +733,11 @@ export function montarPresentacion(root: HTMLElement): Presentacion {
     else if (e.key === 'r' || e.key === 'R') engine.goTo(0); else if (e.key === 'i' || e.key === 'I') engine.goTo(1);
     else if (e.key === 'd' || e.key === 'D') engine.goTo(3); else if (e.key === 'm' || e.key === 'M') audio.toggle();
   };
+  // iOS solo habilita el audio en touchend o click (no en pointerdown/touchstart).
+  const GESTOS = ['touchend', 'click', 'keydown'] as const;
   const unlock = () => audio.unlock();
   window.addEventListener('keydown', onKey);
-  window.addEventListener('pointerdown', unlock, true);
-  window.addEventListener('keydown', unlock, true);
+  GESTOS.forEach((ev) => window.addEventListener(ev, unlock, true));
   window.addEventListener('resize', resize);
 
   /* bucle */
@@ -728,8 +770,7 @@ export function montarPresentacion(root: HTMLElement): Presentacion {
       cancelAnimationFrame(frame);
       timers.forEach((id) => window.clearTimeout(id)); timers.clear();
       window.removeEventListener('keydown', onKey);
-      window.removeEventListener('pointerdown', unlock, true);
-      window.removeEventListener('keydown', unlock, true);
+      GESTOS.forEach((ev) => window.removeEventListener(ev, unlock, true));
       window.removeEventListener('resize', resize);
       engine.subs.clear();
       audio.cerrar();

@@ -57,14 +57,15 @@ export function Presentacion({ planes }: { planes: Plan[] | undefined }) {
         IA · Mensajería · Comercios
       </div>
 
-      <div className="headline" id="headline" aria-live="polite">
-        <div className="volanta caps" id="hEyebrow" />
-        <h1 className="title" id="hTitle" />
-        <p className="sub" id="hSub" />
-      </div>
-
-      <div className="side-wrap" id="sideWrap">
-        <aside className="side panel" id="side" />
+      <div className="columna">
+        <div className="headline" id="headline" aria-live="polite">
+          <div className="volanta caps" id="hEyebrow" />
+          <h1 className="title" id="hTitle" />
+          <p className="sub" id="hSub" />
+        </div>
+        <div className="side-wrap" id="sideWrap">
+          <aside className="side" id="side" />
+        </div>
       </div>
 
       <div className="phone-wrap" id="phoneWrap" aria-hidden="true">
@@ -102,8 +103,7 @@ export function Presentacion({ planes }: { planes: Plan[] | undefined }) {
                 <b>
                   {p.topeMes.toLocaleString('es-AR')} respuestas · {p.maxCanales} {p.maxCanales === 1 ? 'canal' : 'canales'}
                 </b>
-                <br />
-                {detalleDe(p)}
+                <span className="det">{detalleDe(p)}</span>
               </p>
             </Link>
           ))}
@@ -112,8 +112,7 @@ export function Presentacion({ planes }: { planes: Plan[] | undefined }) {
             <div className="price">A medida</div>
             <p>
               <b>Abono según alcance</b>
-              <br />
-              Integraciones con stock, catálogo o CRM
+              <span className="det">Integraciones con stock, catálogo o CRM</span>
             </p>
           </Link>
         </div>
@@ -156,50 +155,33 @@ export function Presentacion({ planes }: { planes: Plan[] | undefined }) {
           <span className="wm">órbita</span>
           <span className="marca-sub">Asistente con IA para comercios</span>
         </div>
-        <div className="topbar-der">
-          <div className="meta caps">
-            <span className="rec" id="rec" data-on="0" />
-            <span className="lbl" id="metaLbl">
-              Listo
-            </span>
-            <span className="tc" id="tc">
-              00:00
-            </span>
-          </div>
-          <nav className="nav" aria-label="Principal">
-            <button type="button" className="nav-sec" onClick={() => motor.current?.irA('como-funciona')}>
-              Cómo funciona
-            </button>
-            <button type="button" className="nav-sec" onClick={() => motor.current?.irA('planes')}>
-              Planes
-            </button>
-            <Link to="/contacto" className="nav-sec">
-              Contacto
-            </Link>
-            <Link to="/ingresar">Ingresar</Link>
-            <Link to="/registro" className="nav-cta">
-              Empezar
-            </Link>
-          </nav>
-        </div>
+        <nav className="nav" aria-label="Principal">
+          <button type="button" className="nav-sec" onClick={() => motor.current?.irA('como-funciona')}>
+            Cómo funciona
+          </button>
+          <button type="button" className="nav-sec" onClick={() => motor.current?.irA('planes')}>
+            Planes
+          </button>
+          <Link to="/contacto" className="nav-sec">
+            Contacto
+          </Link>
+          <Link to="/ingresar">Ingresar</Link>
+          <Link to="/registro" className="nav-cta">
+            Empezar
+          </Link>
+        </nav>
       </header>
 
-      <nav className="dock panel" aria-label="Controles de la presentación">
+      <nav className="dock" aria-label="Controles de la presentación">
         <div className="ctrls">
-          <button type="button" className="ib" id="bRestart" aria-label="Reiniciar" title="Reiniciar (R)">
-            <svg className="i" viewBox="0 0 24 24">
-              <path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3" />
-              <path d="M4.5 4.5v4h4" />
-            </svg>
-          </button>
-          <button type="button" className="ib" id="bPrev" aria-label="Escena anterior" title="Escena anterior (←)">
+          <button type="button" className="ib nav-paso" id="bPrev" aria-label="Escena anterior" title="Escena anterior (←)">
             <svg className="i f" viewBox="0 0 24 24">
               <path d="M17.5 6.2v11.6L9 12z" />
               <rect x="6" y="6" width="2" height="12" rx="1" />
             </svg>
           </button>
           <button type="button" className="ib play" id="bPlay" aria-label="Reproducir" title="Pausar / reproducir (espacio)" />
-          <button type="button" className="ib" id="bNext" aria-label="Escena siguiente" title="Escena siguiente (→)">
+          <button type="button" className="ib nav-paso" id="bNext" aria-label="Escena siguiente" title="Escena siguiente (→)">
             <svg className="i f" viewBox="0 0 24 24">
               <path d="M6.5 6.2v11.6L15 12z" />
               <rect x="16" y="6" width="2" height="12" rx="1" />
@@ -207,26 +189,10 @@ export function Presentacion({ planes }: { planes: Plan[] | undefined }) {
           </button>
         </div>
         <div className="segs" id="segs" />
-        <div className="demos">
-          <button type="button" className="atajo" id="cIA" title="Cómo piensa una IA (I)">
-            <svg className="i" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="3" />
-              <circle cx="5" cy="6" r="1.6" />
-              <circle cx="19" cy="6" r="1.6" />
-              <circle cx="5" cy="18" r="1.6" />
-              <circle cx="19" cy="18" r="1.6" />
-              <path d="M6.3 7l3.4 3M17.7 7l-3.4 3M6.3 17l3.4-3M17.7 17l-3.4-3" />
-            </svg>
-            <span>Cómo piensa</span>
-          </button>
-          <button type="button" className="atajo" id="cChat" title="Demo de chat (D)">
-            <svg className="i" viewBox="0 0 24 24">
-              <path d="M5 5.5h14a1.5 1.5 0 0 1 1.5 1.5v8A1.5 1.5 0 0 1 19 16.5h-7l-4.5 3.5v-3.5H5A1.5 1.5 0 0 1 3.5 15V7A1.5 1.5 0 0 1 5 5.5z" />
-            </svg>
-            <span>Demo chat</span>
-          </button>
-          <button type="button" className="ib" id="bSound" aria-label="Sonido" title="Sonido (M)" />
-        </div>
+        <span className="tc" id="tc">
+          00:00
+        </span>
+        <button type="button" className="ib" id="bSound" aria-label="Sonido" title="Sonido (M)" />
       </nav>
 
       <div className="start on" id="start">
@@ -246,7 +212,7 @@ export function Presentacion({ planes }: { planes: Plan[] | undefined }) {
               Cómo piensa una IA
             </button>
             <button type="button" className="btn ghost" id="sChat">
-              Demo de chat
+              Ver un chat de ejemplo
             </button>
           </div>
           <button type="button" className="sound-note" id="sSound" />
