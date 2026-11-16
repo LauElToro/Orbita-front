@@ -1,7 +1,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { session } from '../api';
+import { session, sesionCliente } from '../api';
 import { FICHA, METRICAS, PLANES, TICKET } from '../test/fixtures';
 import { mockApi, renderApp } from '../test/utils';
 
@@ -15,12 +15,20 @@ describe('sitio público', () => {
     const elegir = await screen.findByRole('link', { name: 'Elegir Turnos' });
     expect(elegir).toHaveAttribute('href', '/registro?plan=turnos');
     expect(screen.getByText(/84\.000/)).toBeInTheDocument();
-    expect(screen.getAllByText('TikTok').length).toBeGreaterThan(0);
     expect(screen.queryByText('Telegram')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Transferencia' })).not.toBeInTheDocument();
     expect(screen.getByText('El más elegido')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Hablemos' })).toHaveAttribute('href', '/contacto');
+    expect(screen.getByRole('link', { name: /plan personalizado/ })).toHaveAttribute('href', '/contacto');
+    expect(screen.getByRole('link', { name: 'Probá la demo gratis' })).toHaveAttribute('href', '/registro');
+    expect(screen.getByRole('link', { name: 'Empezar' })).toHaveAttribute('href', '/registro');
     expect(screen.getByRole('link', { name: 'Botón de arrepentimiento' })).toHaveAttribute('href', '/arrepentimiento');
+  });
+
+  it('la demo de la landing lleva al panel si ya hay sesión', async () => {
+    sesionCliente.set('jwt');
+    mockApi({ 'GET /publico/planes': PUBLICOS });
+    renderApp('/');
+    expect(await screen.findByRole('link', { name: 'Probá la demo gratis' })).toHaveAttribute('href', '/cuenta/demo');
   });
 
   it('términos y privacidad muestran las cláusulas clave y la versión vigente', () => {

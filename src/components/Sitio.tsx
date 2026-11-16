@@ -24,7 +24,7 @@ export function SitioHeader() {
       <nav className="site-nav">
         <a href="/#como-funciona">Cómo funciona</a>
         <a href="/#planes">Planes</a>
-        <a href="/#preguntas">Preguntas</a>
+        <Link to="/contacto">Contacto</Link>
         <Link to="/ingresar">Ingresar</Link>
         <Link to="/registro" className="button button-sm">
           Empezar
@@ -34,12 +34,12 @@ export function SitioHeader() {
   );
 }
 
-export function SitioFooter() {
+export function SitioFooter({ className, logo = <Logo claro /> }: { className?: string; logo?: ReactNode }) {
   return (
-    <footer className="site-footer">
+    <footer className={className ? `site-footer ${className}` : 'site-footer'}>
       <div className="site-footer-grid">
         <div>
-          <Logo claro />
+          {logo}
           <p className="small">Asistentes con IA para comercios, conectados directo a WhatsApp, Instagram y TikTok.</p>
         </div>
         <div>

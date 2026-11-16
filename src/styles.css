@@ -100,7 +100,7 @@ button.link { background: none; border: none; color: var(--primary); padding: 0.
 .button-lg, button.button-lg { padding: 0.75rem 1.4rem; font-size: 1.05rem; border-radius: 10px; }
 .button-ghost { background: transparent; border-color: rgba(255, 255, 255, 0.4); color: #fff; }
 .button-ghost-dark { background: transparent; color: var(--primary); }
-button:not(.secondary):not(.link):not(.chip):not(.icon-btn):not(.ghost-btn):not(.funcion):not([role='radio']):not(:disabled):hover, .button:not(.secondary):hover { background: var(--primary-dark); border-color: var(--primary-dark); }
+button:not(.secondary):not(.link):not(.chip):not(.icon-btn):not(.ghost-btn):not(.funcion):not([role='radio']):not(.pres button):not(:disabled):hover, .button:not(.secondary):hover { background: var(--primary-dark); border-color: var(--primary-dark); }
 .button-ghost:hover { background: rgba(255, 255, 255, 0.1) !important; border-color: #fff !important; }
 .button-ghost-dark:hover { color: #fff; }
 .centrado { text-align: center; }
