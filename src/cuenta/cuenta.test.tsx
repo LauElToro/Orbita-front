@@ -97,8 +97,10 @@ describe('registro y acceso del cliente', () => {
   it('continúa con Google sin completar el formulario y sin plan', async () => {
     const assign = vi.fn();
     const ubicacion = window.location;
-    Reflect.deleteProperty(window, 'location');
-    window.location = { ...ubicacion, assign } as unknown as Location;
+    const ponerUbicacion = (valor: Location) => {
+      Object.defineProperty(window, 'location', { configurable: true, value: valor });
+    };
+    ponerUbicacion({ ...ubicacion, assign } as unknown as Location);
     let body: unknown;
     mockApi({
       'GET /publico/planes': PUBLICOS,
@@ -115,7 +117,7 @@ describe('registro y acceso del cliente', () => {
       await waitFor(() => expect(body).toEqual({ modo: 'registro' }));
       expect(assign).toHaveBeenCalledWith('https://accounts.google.com/o/oauth2/auth?x=1');
     } finally {
-      window.location = ubicacion;
+      ponerUbicacion(ubicacion);
     }
   });
 
