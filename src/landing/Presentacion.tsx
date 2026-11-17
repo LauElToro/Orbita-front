@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { sesionCliente } from '../api';
-import { DESTACADO } from '../components/Planes';
+import { DESTACADO, Oferta, OFERTA_LEYENDA } from '../components/Planes';
 import { pesos } from '../format';
 import type { Plan } from '../types';
 import { montarPresentacion, type Presentacion as Motor } from './escena';
@@ -90,11 +90,13 @@ export function Presentacion({ planes }: { planes: Plan[] | undefined }) {
       </div>
       <div className="block tarifas-bloque" id="plansBlock">
         <div className="volanta center caps">Planes claros, en pesos y sin sorpresas</div>
+        <div className="oferta-banner">{OFERTA_LEYENDA}</div>
         <div className="tarifas">
           {planes?.map((p) => (
             <Link key={p.id} to={`/checkout?plan=${p.id}`} className={`tarifa${p.id === DESTACADO ? ' top' : ''}`} aria-label={`Elegir ${p.nombre}`}>
               {p.id === DESTACADO && <span className="tag">El más elegido</span>}
               <h3>{p.nombre}</h3>
+              <Oferta precio={p.precioMercadoPago} />
               <div className="price">
                 {pesos(p.precioMercadoPago)}
                 <small>/mes</small>

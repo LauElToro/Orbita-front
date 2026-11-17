@@ -579,7 +579,7 @@ export function PlanYPagos() {
               <select aria-label="Plan" value={planId} onChange={(e) => setPlanId(e.target.value as PlanId)}>
                 {planes.data?.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.nombre} ({pesos(p.precioMercadoPago)}/mes)
+                    {p.nombre} ({pesos(p.precioMercadoPago)}/mes · 20% OFF)
                   </option>
                 ))}
               </select>

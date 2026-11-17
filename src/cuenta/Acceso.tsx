@@ -2,6 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { api, referido, sesionCliente } from '../api';
+import { Oferta } from '../components/Planes';
 import { Logo } from '../components/Sitio';
 import { Check, ErrorMsg } from '../components/ui';
 import { pesos } from '../format';
@@ -56,10 +57,13 @@ function Promo() {
             <h3>Plan Turnos</h3>
           </span>
           {turnos && (
-            <p className="auth-plan-precio">
-              {pesos(turnos.precioMercadoPago)}
-              <small>/mes</small>
-            </p>
+            <span className="auth-plan-precios">
+              <Oferta precio={turnos.precioMercadoPago} />
+              <p className="auth-plan-precio">
+                {pesos(turnos.precioMercadoPago)}
+                <small>/mes</small>
+              </p>
+            </span>
           )}
         </div>
         <ul className="auth-plan-lista">
@@ -231,7 +235,7 @@ export function Registro() {
               <option value="">Sin plan, lo elijo después</option>
               {planes.data?.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.nombre} · {pesos(p.precioMercadoPago)}/mes
+                  {p.nombre} · {pesos(p.precioMercadoPago)}/mes · 20% OFF
                 </option>
               ))}
             </select>

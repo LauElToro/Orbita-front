@@ -165,6 +165,10 @@ button:not(.secondary):not(.link):not(.chip):not(.icon-btn):not(.ghost-btn):not(
 .plan h3 { margin: 0; font-size: 1.15rem; }
 .plan-precio { font-size: 2rem; font-weight: 800; margin: 0.75rem 0 0.1rem; letter-spacing: -0.02em; }
 .plan-precio span { font-size: 0.95rem; font-weight: 500; color: var(--muted); }
+.oferta { display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.85rem; color: var(--muted); white-space: nowrap; }
+.oferta b { background: var(--ok-soft); color: var(--ok); font-size: 0.7rem; font-weight: 800; letter-spacing: 0.04em; padding: 0.15rem 0.5rem; border-radius: 999px; }
+.oferta-nota { margin: 0.6rem 0 0; font-size: 0.82rem; font-weight: 600; color: var(--ok); }
+.plan .oferta { margin-top: 0.6rem; }
 .plan-lista { list-style: none; padding: 0; margin: 1rem 0 1.5rem; flex: 1; display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.92rem; }
 .plan-lista li { padding-left: 1.4rem; position: relative; line-height: 1.4; }
 .plan-lista li::before { content: '✓'; position: absolute; left: 0; color: var(--ok); font-weight: 800; }
@@ -231,6 +235,7 @@ button:not(.secondary):not(.link):not(.chip):not(.icon-btn):not(.ghost-btn):not(
 .auth-plan-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem; }
 .auth-plan-head h3 { margin: 0.35rem 0 0; font-size: 1.3rem; }
 .auth-plan-tag { display: inline-block; background: #fff1d6; color: #8a5a00; font-size: 0.72rem; font-weight: 800; border-radius: 999px; padding: 0.2rem 0.6rem; }
+.auth-plan-precios { display: flex; flex-direction: column; align-items: flex-end; gap: 0.2rem; }
 .auth-plan-precio { margin: 0; font-size: 1.9rem; font-weight: 800; letter-spacing: -0.02em; white-space: nowrap; }
 .auth-plan-precio small { font-size: 0.9rem; font-weight: 500; color: var(--muted); }
 .auth-plan-lista { list-style: none; margin: 0.9rem 0 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem 1rem; font-size: 0.88rem; color: #3c4456; }

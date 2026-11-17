@@ -17,6 +17,20 @@ export function beneficiosDe(plan: Plan): string[] {
 
 export const DESTACADO = 'turnos';
 
+export const OFERTA_LEYENDA = 'Oferta 20% OFF en planes mensuales y anuales por 1 año';
+
+// Solo marketing: el precio cobrado no cambia, se muestra un precio "antes" un 20% más alto.
+export const precioAntes = (precio: number) => Math.round(precio / 0.8 / 100) * 100;
+
+export function Oferta({ precio, className = 'oferta' }: { precio: number; className?: string }) {
+  return (
+    <span className={className}>
+      <s>{pesos(precioAntes(precio))}</s>
+      <b>20% OFF</b>
+    </span>
+  );
+}
+
 export function precioDe(plan: Plan, medio: MedioPago): number {
   return medio === 'mercadopago' ? plan.precioMercadoPago : plan.precioTransferencia;
 }
@@ -36,11 +50,12 @@ export function PlanCard({
     <div className={`plan ${plan.id === DESTACADO ? 'plan-destacado' : ''} ${seleccionado ? 'plan-sel' : ''}`}>
       {plan.id === DESTACADO && <span className="plan-tag">El más elegido</span>}
       <h3>{plan.nombre}</h3>
+      <Oferta precio={precioDe(plan, medio)} />
       <p className="plan-precio">
         {pesos(precioDe(plan, medio))}
         <span>/mes</span>
       </p>
-      <p className="small muted">Débito automático con Mercado Pago</p>
+      <p className="small muted">{OFERTA_LEYENDA} · Débito automático con Mercado Pago</p>
       <ul className="plan-lista">
         {beneficiosDe(plan).map((b) => (
           <li key={b}>{b}</li>

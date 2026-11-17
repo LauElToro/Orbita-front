@@ -604,7 +604,7 @@ function ElegirPlan() {
           <option value="">Elegí un plan</option>
           {planes.data?.map((p) => (
             <option key={p.id} value={p.id}>
-              {p.nombre} · {pesos(p.precioMercadoPago)}/mes
+              {p.nombre} · {pesos(p.precioMercadoPago)}/mes · 20% OFF
             </option>
           ))}
         </select>

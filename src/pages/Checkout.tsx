@@ -2,6 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { api, referido } from '../api';
+import { Oferta, OFERTA_LEYENDA } from '../components/Planes';
 import { Check, ErrorMsg } from '../components/ui';
 import { IconoMail, Marco } from '../cuenta/Acceso';
 import { pesos } from '../format';
@@ -51,7 +52,7 @@ export function Checkout() {
             <select aria-label="Plan" value={plan?.id ?? ''} onChange={(e) => setParams({ plan: e.target.value }, { replace: true })}>
               {planes.data?.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.nombre} · {pesos(p.precioMercadoPago)}/mes
+                  {p.nombre} · {pesos(p.precioMercadoPago)}/mes · 20% OFF
                 </option>
               ))}
             </select>
@@ -62,10 +63,13 @@ export function Checkout() {
           <article className="checkout-resumen" aria-label="Resumen del plan">
             <div className="checkout-resumen-head">
               <h2>Plan {plan.nombre}</h2>
-              <p className="checkout-precio">
-                {pesos(plan.precioMercadoPago)}
-                <small>/mes</small>
-              </p>
+              <span className="auth-plan-precios">
+                <Oferta precio={plan.precioMercadoPago} />
+                <p className="checkout-precio">
+                  {pesos(plan.precioMercadoPago)}
+                  <small>/mes</small>
+                </p>
+              </span>
             </div>
             <ul>
               <li>
@@ -76,6 +80,7 @@ export function Checkout() {
               ))}
               {plan.modeloCapaz && <li>Modelo de IA más capaz</li>}
             </ul>
+            <p className="oferta-nota">{OFERTA_LEYENDA}</p>
             <p className="checkout-total">
               <span>Total hoy</span>
               <span>{pesos(plan.precioMercadoPago)}</span>
