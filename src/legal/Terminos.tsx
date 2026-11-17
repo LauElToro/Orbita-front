@@ -261,9 +261,9 @@ export function Terminos() {
             cualquier plan, excepto el Plan Personalizado, que no genera comisión. Los pagos siguientes no generan comisión.
           </li>
           <li>
-            Orbita paga las comisiones por transferencia a la cuenta que el Afiliado informe en su panel, una vez acreditado el pago del
-            referido. Si el referido ejerce el derecho de revocación del punto 8, obtiene un reintegro o el pago es desconocido, la comisión
-            se anula.
+            Orbita paga cada comisión por transferencia a la cuenta que el Afiliado informe en su panel <strong>entre los 30 y los 60 días
+            corridos posteriores</strong> a la fecha en que el referido abonó su primer pago. Si el referido ejerce el derecho de revocación del
+            punto 8, obtiene un reintegro o el pago es desconocido antes de que la comisión se pague, la comisión se anula.
           </li>
           <li>
             Orbita puede anular comisiones y dar de baja al Afiliado ante fraude, autoreferidos, spam, publicidad engañosa o uso indebido de la

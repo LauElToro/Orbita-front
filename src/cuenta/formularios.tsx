@@ -625,9 +625,20 @@ export function PagoBloque({ cuenta }: { cuenta: Cuenta }) {
   });
   if (!sub) return null;
   if (sub.estadoPago === 'al_dia') {
-    return <p className="ok-msg">Tu pago está al día. ¡Gracias!</p>;
+    return (
+      <p className="ok-msg">
+        Tu pago está al día. ¡Gracias!{sub.debitoActivo && ' El débito automático mensual de Mercado Pago está activo.'}
+      </p>
+    );
   }
   if (!cuenta.planElegido) return <ElegirPlan />;
+  if (sub.debitoActivo) {
+    return (
+      <p className="small muted">
+        Ya aprobaste el débito automático en Mercado Pago. Estamos esperando que se acredite el cobro de {pesos(sub.importe)}.
+      </p>
+    );
+  }
   return (
     <div className="pago-bloque">
       <p>

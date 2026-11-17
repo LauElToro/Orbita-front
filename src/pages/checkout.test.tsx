@@ -58,10 +58,21 @@ describe('afiliados', () => {
         codigo: 'juan-socio-ab12',
         link: 'https://orbita.test/?ref=juan-socio-ab12',
         porcentaje: 50,
+        plazo: { desde: 30, hasta: 60 },
         datosCobro: null,
         totales: { pendiente: 42000, pagada: 0 },
         referidos: [{ id: 'r1', negocio: 'Kiosco Ana', plan: 'Turnos', pago: true, createdAt: '2026-11-14T15:00:00.000Z' }],
-        comisiones: [{ id: 'c1', importe: 42000, estado: 'pendiente', pagadaEn: null, createdAt: '2026-11-14T15:00:00.000Z' }],
+        comisiones: [
+          {
+            id: 'c1',
+            importe: 42000,
+            estado: 'pendiente',
+            pagableDesde: '2026-12-14T15:00:00.000Z',
+            pagarAntes: '2027-01-13T15:00:00.000Z',
+            pagadaEn: null,
+            createdAt: '2026-11-14T15:00:00.000Z',
+          },
+        ],
       },
     });
     renderApp('/afiliados');
@@ -73,6 +84,7 @@ describe('afiliados', () => {
 
     expect(await screen.findByText('https://orbita.test/?ref=juan-socio-ab12')).toBeInTheDocument();
     expect(screen.getByText('Kiosco Ana')).toBeInTheDocument();
+    expect(screen.getByText('14/12/2026 y 13/1/2027')).toBeInTheDocument();
     expect(sesionAfiliado.get()).toBe('jwt-afiliado');
   });
 });

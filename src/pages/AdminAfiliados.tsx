@@ -54,12 +54,17 @@ export function Afiliados() {
                 <th>Cliente</th>
                 <th>Primer pago</th>
                 <th>Comisión</th>
+                <th>Pagar entre</th>
                 <th>Estado</th>
                 <th />
               </tr>
             </thead>
             <tbody>
-              {comisiones.data.map((c) => (
+              {comisiones.data.map((c) => {
+                const ahora = Date.now();
+                const habilitada = ahora >= new Date(c.pagableDesde).getTime();
+                const vencida = ahora > new Date(c.pagarAntes).getTime();
+                return (
                 <tr key={c.id}>
                   <td>{fecha(c.createdAt)}</td>
                   <td>
@@ -74,13 +79,32 @@ export function Afiliados() {
                     <strong>{pesos(c.importe)}</strong>
                   </td>
                   <td>
+                    {fecha(c.pagableDesde)} y {fecha(c.pagarAntes)}
+                    {c.estado === 'pendiente' && (
+                      <div>
+                        {vencida ? (
+                          <Badge tone="bad">Vencida</Badge>
+                        ) : habilitada ? (
+                          <Badge tone="ok">Lista para pagar</Badge>
+                        ) : (
+                          <Badge tone="muted">En espera</Badge>
+                        )}
+                      </div>
+                    )}
+                  </td>
+                  <td>
                     <Badge tone={ESTADO_COMISION[c.estado].tone}>{ESTADO_COMISION[c.estado].label}</Badge>
                     {c.pagadaEn && <div className="muted small">{fecha(c.pagadaEn)}</div>}
                   </td>
                   <td>
                     {c.estado === 'pendiente' && (
                       <div className="actions">
-                        <button type="button" disabled={cambiar.isPending} onClick={() => cambiar.mutate({ id: c.id, accion: 'pagada' })}>
+                        <button
+                          type="button"
+                          disabled={cambiar.isPending || !habilitada}
+                          title={habilitada ? undefined : `Se paga desde el ${fecha(c.pagableDesde)}`}
+                          onClick={() => cambiar.mutate({ id: c.id, accion: 'pagada' })}
+                        >
                           Marcar pagada
                         </button>
                         <button
@@ -97,7 +121,8 @@ export function Afiliados() {
                     )}
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         )}

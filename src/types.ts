@@ -188,6 +188,7 @@ export interface Cuenta {
     vencimiento: string;
     importe: number;
     mpInitPoint: string | null;
+    debitoActivo?: boolean;
   } | null;
   transferencia: { alias: string; importe: number; concepto: string } | null;
   onboarding: { paso: number; completado: string | null; requisitos: Requisitos };
@@ -239,10 +240,19 @@ export interface PanelAfiliado {
   codigo: string;
   link: string;
   porcentaje: number;
+  plazo: { desde: number; hasta: number };
   datosCobro: string | null;
   totales: { pendiente: number; pagada: number };
   referidos: { id: string; negocio: string; plan: string | null; pago: boolean; createdAt: string }[];
-  comisiones: { id: string; importe: number; estado: ComisionEstado; pagadaEn: string | null; createdAt: string }[];
+  comisiones: {
+    id: string;
+    importe: number;
+    estado: ComisionEstado;
+    pagableDesde: string;
+    pagarAntes: string;
+    pagadaEn: string | null;
+    createdAt: string;
+  }[];
 }
 
 export interface AfiliadoResumen {
@@ -261,6 +271,8 @@ export interface Comision {
   id: string;
   importe: number;
   estado: ComisionEstado;
+  pagableDesde: string;
+  pagarAntes: string;
   pagadaEn: string | null;
   createdAt: string;
   affiliate: { nombre: string; email: string; datosCobro: string | null };
