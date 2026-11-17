@@ -9,6 +9,7 @@ const GRUPOS: GrupoNav[] = [
     items: [
       { to: '/admin/clientes', label: 'Clientes', icono: 'clientes' },
       { to: '/admin/tickets', label: 'Tickets', icono: 'tickets' },
+      { to: '/admin/afiliados', label: 'Afiliados', icono: 'persona' },
     ],
   },
 ];

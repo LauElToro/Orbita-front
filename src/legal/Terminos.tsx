@@ -246,6 +246,34 @@ export function Terminos() {
           competente el tribunal correspondiente a su domicilio (art. 36 de la Ley 24.240).
         </p>
 
+        <h2 id="afiliados">22. Programa de afiliados</h2>
+        <p>
+          Cualquier persona mayor de 18 años puede sumarse al programa de afiliados (el <strong>"Afiliado"</strong>) sin necesidad de ser
+          Cliente. Al registrarse, el Afiliado acepta estos Términos en lo que le resulten aplicables y las siguientes condiciones:
+        </p>
+        <ul>
+          <li>
+            El Afiliado recibe un link personal. Una cuenta nueva queda atribuida al Afiliado si se crea desde ese link dentro de los 30 días
+            posteriores a abrirlo. No se atribuyen cuentas creadas antes ni cuentas del propio Afiliado.
+          </li>
+          <li>
+            Por cada cuenta atribuida, el Afiliado recibe una comisión equivalente al <strong>50% del primer pago</strong> acreditado de
+            cualquier plan, excepto el Plan Personalizado, que no genera comisión. Los pagos siguientes no generan comisión.
+          </li>
+          <li>
+            Orbita paga las comisiones por transferencia a la cuenta que el Afiliado informe en su panel, una vez acreditado el pago del
+            referido. Si el referido ejerce el derecho de revocación del punto 8, obtiene un reintegro o el pago es desconocido, la comisión
+            se anula.
+          </li>
+          <li>
+            Orbita puede anular comisiones y dar de baja al Afiliado ante fraude, autoreferidos, spam, publicidad engañosa o uso indebido de la
+            marca {EMPRESA.marca}. El Afiliado es responsable de las obligaciones impositivas que le correspondan por las comisiones cobradas.
+          </li>
+          <li>
+            Orbita puede modificar o discontinuar el programa avisando por email. Las comisiones ya generadas se respetan.
+          </li>
+        </ul>
+
         <p className="muted small">
           Consultas legales: <a href={`mailto:${EMPRESA.email}`}>{EMPRESA.email}</a>
         </p>

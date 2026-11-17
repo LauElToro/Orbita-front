@@ -231,6 +231,43 @@ export interface Pago {
   createdAt: string;
 }
 
+export type ComisionEstado = 'pendiente' | 'pagada' | 'anulada';
+
+export interface PanelAfiliado {
+  nombre: string;
+  email: string;
+  codigo: string;
+  link: string;
+  porcentaje: number;
+  datosCobro: string | null;
+  totales: { pendiente: number; pagada: number };
+  referidos: { id: string; negocio: string; plan: string | null; pago: boolean; createdAt: string }[];
+  comisiones: { id: string; importe: number; estado: ComisionEstado; pagadaEn: string | null; createdAt: string }[];
+}
+
+export interface AfiliadoResumen {
+  id: string;
+  nombre: string;
+  email: string;
+  codigo: string;
+  datosCobro: string | null;
+  referidos: number;
+  pendiente: number;
+  pagada: number;
+  createdAt: string;
+}
+
+export interface Comision {
+  id: string;
+  importe: number;
+  estado: ComisionEstado;
+  pagadaEn: string | null;
+  createdAt: string;
+  affiliate: { nombre: string; email: string; datosCobro: string | null };
+  tenant: { id: string; nombre: string };
+  payment: { importe: number; medio: MedioPago; createdAt: string };
+}
+
 export interface Metricas {
   clientes: {
     total: number;

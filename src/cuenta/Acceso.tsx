@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { api, sesionCliente } from '../api';
+import { api, referido, sesionCliente } from '../api';
 import { Logo } from '../components/Sitio';
 import { Check, ErrorMsg } from '../components/ui';
 import { pesos } from '../format';
@@ -79,7 +79,7 @@ function Promo() {
   );
 }
 
-function Marco({ children }: { children: ReactNode }) {
+export function Marco({ children }: { children: ReactNode }) {
   return (
     <div className="auth">
       <Promo />
@@ -113,7 +113,7 @@ function BotonGoogle({ pending, disabled, onClick }: { pending: boolean; disable
   );
 }
 
-function IconoMail() {
+export function IconoMail() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
       <path fill="currentColor" d="M3 6.5A2.5 2.5 0 0 1 5.5 4h13A2.5 2.5 0 0 1 21 6.5v11a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5v-11Zm2.2.5 6.4 4.3a.7.7 0 0 0 .8 0L19 7H5.2Z" />
@@ -129,7 +129,7 @@ function IconoCandado() {
   );
 }
 
-function Clave({
+export function Clave({
   label,
   value,
   onChange,
@@ -190,7 +190,13 @@ export function Registro() {
     mutationFn: () =>
       api<{ token: string }>('/cuenta/registro', {
         method: 'POST',
-        body: { ...form, planId: form.planId || undefined, aceptaTerminos: terminos, aceptaPrivacidad: privacidad },
+        body: {
+          ...form,
+          planId: form.planId || undefined,
+          aceptaTerminos: terminos,
+          aceptaPrivacidad: privacidad,
+          ref: referido.get(),
+        },
       }),
     onSuccess: ({ token }) => {
       sesionCliente.set(token);
@@ -198,7 +204,8 @@ export function Registro() {
     },
   });
   const google = useMutation({
-    mutationFn: () => api<{ url: string }>('/cuenta/google/iniciar', { method: 'POST', body: { modo: 'registro' } }),
+    mutationFn: () =>
+      api<{ url: string }>('/cuenta/google/iniciar', { method: 'POST', body: { modo: 'registro', ref: referido.get() } }),
     onSuccess: ({ url }) => location.assign(url),
   });
   const enviar = (e: FormEvent) => {

@@ -264,6 +264,18 @@ button:not(.secondary):not(.link):not(.chip):not(.icon-btn):not(.ghost-btn):not(
 .auth button.auth-google:hover { background: #f6f7fb; color: var(--text); border-color: #cfd3de; }
 .auth-cambio { text-align: center; color: var(--muted); margin: 1rem 0 0; }
 .auth-cambio a { font-weight: 700; text-decoration: none; }
+.checkout-resumen { border: 1px solid var(--border); border-radius: 14px; padding: 1rem 1.1rem; margin: 0 0 1.1rem; background: #f6f7fb; }
+.checkout-resumen-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+.checkout-resumen-head h2 { font-size: 1.1rem; margin: 0; }
+.checkout-precio { font-size: 1.4rem; font-weight: 800; margin: 0; }
+.checkout-precio small { font-size: 0.85rem; font-weight: 600; color: var(--muted); }
+.checkout-resumen ul { margin: 0.6rem 0 0; padding-left: 1.1rem; color: var(--muted); font-size: 0.9rem; line-height: 1.55; }
+.checkout-total { display: flex; justify-content: space-between; border-top: 1px solid var(--border); margin-top: 0.8rem; padding-top: 0.7rem; font-weight: 700; }
+.checkout-nota { color: var(--muted); font-size: 0.82rem; text-align: center; margin: 0.75rem 0 0; }
+.afiliado-panel { max-width: 920px; margin: 0 auto; padding: 2rem 1.25rem 3rem; display: grid; gap: 1rem; }
+.afiliado-panel .logo { margin-bottom: 0.75rem; }
+.afiliado-totales { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.75rem; }
+.afiliado-totales strong { display: block; font-size: 1.4rem; }
 @media (max-width: 900px) {
   .auth { grid-template-columns: 1fr; padding: 0.75rem; }
   .auth-promo { display: none; }

@@ -13,7 +13,7 @@ describe('sitio público', () => {
     renderApp('/');
     expect(screen.getByRole('heading', { level: 1, name: /responde al instante/ })).toBeInTheDocument();
     const elegir = await screen.findByRole('link', { name: 'Elegir Turnos' });
-    expect(elegir).toHaveAttribute('href', '/registro?plan=turnos');
+    expect(elegir).toHaveAttribute('href', '/checkout?plan=turnos');
     expect(screen.getByText(/84\.000/)).toBeInTheDocument();
     expect(screen.queryByText('Telegram')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Transferencia' })).not.toBeInTheDocument();

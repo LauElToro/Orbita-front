@@ -92,7 +92,7 @@ export function Presentacion({ planes }: { planes: Plan[] | undefined }) {
         <div className="volanta center caps">Planes claros, en pesos y sin sorpresas</div>
         <div className="tarifas">
           {planes?.map((p) => (
-            <Link key={p.id} to={`/registro?plan=${p.id}`} className={`tarifa${p.id === DESTACADO ? ' top' : ''}`} aria-label={`Elegir ${p.nombre}`}>
+            <Link key={p.id} to={`/checkout?plan=${p.id}`} className={`tarifa${p.id === DESTACADO ? ' top' : ''}`} aria-label={`Elegir ${p.nombre}`}>
               {p.id === DESTACADO && <span className="tag">El más elegido</span>}
               <h3>{p.nombre}</h3>
               <div className="price">

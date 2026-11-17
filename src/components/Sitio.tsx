@@ -47,6 +47,7 @@ export function SitioFooter({ className, logo = <Logo claro /> }: { className?: 
           <a href="/#planes">Planes</a>
           <Link to="/contacto">IA personalizada</Link>
           <Link to="/ingresar">Ingresar</Link>
+          <Link to="/afiliados">Programa de afiliados</Link>
         </div>
         <div>
           <strong>Legal</strong>
