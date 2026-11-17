@@ -21,6 +21,7 @@ describe('sitio público', () => {
     expect(screen.getByRole('link', { name: /plan personalizado/ })).toHaveAttribute('href', '/contacto');
     expect(screen.getByRole('link', { name: 'Probá la demo gratis' })).toHaveAttribute('href', '/registro');
     expect(screen.getByRole('link', { name: 'Empezar' })).toHaveAttribute('href', '/registro');
+    expect(screen.getByRole('link', { name: 'Contratar ahora' })).toHaveAttribute('href', '/checkout?plan=turnos');
     expect(screen.getByRole('link', { name: 'Botón de arrepentimiento' })).toHaveAttribute('href', '/arrepentimiento');
   });
 

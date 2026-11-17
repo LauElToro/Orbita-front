@@ -209,6 +209,9 @@ export function Presentacion({ planes }: { planes: Plan[] | undefined }) {
             </svg>
             <span>Iniciar presentación</span>
           </button>
+          <Link to={`/checkout?plan=${DESTACADO}`} className="btn checkout">
+            Contratar ahora
+          </Link>
           <div className="start-alt">
             <button type="button" className="btn ghost" id="sIA">
               Cómo piensa una IA
