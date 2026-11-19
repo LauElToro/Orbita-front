@@ -131,12 +131,12 @@ export function Presentacion({ planes }: { planes: Plan[] | undefined }) {
             </svg>
             <span>Probá la demo gratis</span>
           </Link>
-          <a href="https://orbita-ai.duckdns.org/" target="_blank" rel="noopener noreferrer">
+          <a href="https://orbita-emp.com/" target="_blank" rel="noopener noreferrer">
             <svg className="i" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="8.5" />
               <path d="M3.5 12h17M12 3.5c2.4 2.6 3.5 5.4 3.5 8.5s-1.1 5.9-3.5 8.5c-2.4-2.6-3.5-5.4-3.5-8.5S9.6 6.1 12 3.5z" />
             </svg>
-            <span>orbita-ai.duckdns.org</span>
+            <span>orbita-emp.com</span>
           </a>
           <a href="https://www.instagram.com/orbita.emp/" target="_blank" rel="noopener noreferrer">
             <svg className="i" viewBox="0 0 24 24">
