@@ -4,19 +4,12 @@ import { sesionCliente } from '../api';
 import { DESTACADO, Oferta, OFERTA_LEYENDA } from '../components/Planes';
 import { pesos } from '../format';
 import type { Plan } from '../types';
+import { Marca } from '../components/Marca';
 import { montarPresentacion, type Presentacion as Motor } from './escena';
 import './landing.css';
 
 export function Isotipo() {
-  return (
-    <svg className="isotipo" viewBox="0 0 120 82" aria-hidden="true">
-      <g transform="translate(56,44)">
-        <circle className="s" r="13" />
-        <ellipse className="s" rx="42" ry="14.5" transform="rotate(-27)" />
-        <circle className="d" cx="36.5" cy="-17" r="6.5" />
-      </g>
-    </svg>
-  );
+  return <Marca className="isotipo" />;
 }
 
 function detalleDe(plan: Plan): string {

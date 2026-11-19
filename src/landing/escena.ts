@@ -368,14 +368,17 @@ export function montarPresentacion(root: HTMLElement): Presentacion {
     const c = document.createElement('canvas'), LW = 900, LH = 520; c.width = LW; c.height = LH;
     const x = c.getContext('2d', { willReadFrequently: true });
     if (!x) return;
-    x.translate(430, 170); x.strokeStyle = '#fff'; x.lineWidth = 10;
-    x.beginPath(); x.arc(0, 0, 60, 0, TAU); x.stroke();
-    x.save(); x.rotate(-27 * D2R); x.beginPath(); x.ellipse(0, 0, 190, 66, 0, 0, TAU); x.stroke(); x.restore();
-    x.fillStyle = '#0000ff'; x.beginPath(); x.arc(166, -76, 30, 0, TAU); x.fill();
-    x.setTransform(1, 0, 0, 1, 0, 0);
-    x.fillStyle = '#fff'; x.textBaseline = 'middle'; x.font = `300 120px ${FUENTE}`;
-    const chars = 'órbita'.split(''), sp = 16; let tw = 0; chars.forEach((ch) => { tw += x.measureText(ch).width + sp; }); tw -= sp;
-    let px = (LW - tw) / 2; chars.forEach((ch) => { x.fillText(ch, px, 420); px += x.measureText(ch).width + sp; });
+    const s = 1.05, X = (px: number) => (px - 506) * s + LW / 2, Y = (py: number) => (py - 360) * s + 36;
+    x.strokeStyle = '#fff'; x.lineWidth = 30 * s; x.lineCap = 'round'; x.lineJoin = 'round';
+    x.beginPath(); x.moveTo(X(567), Y(386)); x.lineTo(X(400), Y(386));
+    x.quadraticCurveTo(X(345), Y(386), X(345), Y(450)); x.lineTo(X(345), Y(545));
+    x.quadraticCurveTo(X(345), Y(600), X(411), Y(600)); x.lineTo(X(411), Y(660)); x.stroke();
+    x.beginPath(); x.moveTo(X(645), Y(470)); x.lineTo(X(645), Y(548));
+    x.quadraticCurveTo(X(645), Y(604), X(590), Y(604)); x.lineTo(X(490), Y(604)); x.lineTo(X(411), Y(660)); x.stroke();
+    x.fillStyle = '#0000ff'; x.beginPath(); x.arc(X(645), Y(389), 37 * s, 0, TAU); x.fill();
+    x.fillStyle = '#fff'; x.textBaseline = 'middle'; x.font = `700 96px ${FUENTE}`;
+    const chars = 'órbita'.split(''), sp = 2; let tw = 0; chars.forEach((ch) => { tw += x.measureText(ch).width + sp; }); tw -= sp;
+    let px = (LW - tw) / 2; chars.forEach((ch) => { x.fillText(ch, px, 455); px += x.measureText(ch).width + sp; });
     const d = x.getImageData(0, 0, LW, LH).data, cand: number[] = [];
     for (let yy = 0; yy < LH; yy += 2) for (let xx = 0; xx < LW; xx += 2) { const k = (yy * LW + xx) * 4; if (d[k + 3] > 140) cand.push(xx, yy, d[k] < 100 ? 1 : 0); }
     const n = cand.length / 3; if (!n) return;

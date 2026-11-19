@@ -24,10 +24,10 @@
 .pres :focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
 
 /* marca */
-.pres .isotipo, .pie-orbita .isotipo { width: 44px; height: 30px; flex: none; color: inherit; }
-.pres .isotipo .s, .pie-orbita .isotipo .s { fill: none; stroke: currentColor; stroke-width: 3.2; }
-.pres .isotipo .d { fill: var(--blue); }
-.pres .wm, .pie-orbita .wm { font-weight: 300; letter-spacing: .12em; }
+.pres .isotipo, .pie-orbita .isotipo { width: 36px; height: 32px; flex: none; color: inherit; }
+.pres .isotipo .s, .pie-orbita .isotipo .s { fill: none; stroke: currentColor; stroke-width: 30; stroke-linecap: round; stroke-linejoin: round; }
+.pres .isotipo .d, .pie-orbita .isotipo .d { fill: #4577fe; }
+.pres .wm, .pie-orbita .wm { font-weight: 700; letter-spacing: -0.04em; }
 
 /* barra superior y navegación */
 .pres .topbar { position: absolute; top: 0; left: 0; right: 0; z-index: 9; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px 0; pointer-events: none; }
@@ -178,10 +178,11 @@
 .pres .btn.checkout:hover { transform: translateY(-2px); }
 
 /* inicio */
-.pres .start { position: absolute; inset: 0; z-index: 8; display: grid; place-items: center; padding: 24px 16px; background: radial-gradient(70% 60% at 50% 50%, rgba(5, 5, 7, .55), rgba(5, 5, 7, .9)); opacity: 0; visibility: hidden; transition: opacity .6s, visibility .6s; }
+.pres .start { position: absolute; inset: 0; z-index: 8; display: grid; place-items: safe center; padding: 76px 16px 100px; background: radial-gradient(70% 60% at 50% 50%, rgba(5, 5, 7, .55), rgba(5, 5, 7, .9)); opacity: 0; visibility: hidden; transition: opacity .6s, visibility .6s; }
 .pres .start.on { opacity: 1; visibility: visible; }
+.pres:has(.start.on) .dock { visibility: hidden; }
 .pres .start-card { text-align: center; max-width: 620px; display: flex; flex-direction: column; align-items: center; gap: 16px; }
-.pres .start-card .isotipo { width: 130px; height: 88px; }
+.pres .start-card .isotipo { width: 112px; height: 100px; }
 .pres .start-card .wm { font-size: clamp(44px, 8vw, 84px); line-height: 1; }
 .pres .lede { margin: 2px 0 8px; font-size: 17px; line-height: 1.55; color: var(--muted); max-width: 44ch; text-wrap: balance; }
 .pres .start-alt { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
@@ -253,7 +254,7 @@
   .pres .nav .nav-cta { margin-left: 4px; padding: 8px 14px; }
   .pres .nav-paso { display: none; }
   .pres .start-card { gap: 12px; }
-  .pres .start-card .isotipo { width: 96px; height: 66px; }
+  .pres .start-card .isotipo { width: 84px; height: 75px; }
   .pres .lede { font-size: 15px; }
 }
 /* Celulares bajos (iPhone SE): solo titular y paso actual, planes y cierre compactos. */
@@ -301,7 +302,6 @@
 .site-footer.pie-orbita { background: #050507; color: #6d7184; border-top: 1px solid rgba(255, 255, 255, .08); font-family: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif; }
 .pie-orbita .pie-marca { display: inline-flex; align-items: center; gap: 10px; color: #f3f4f8; }
 .pie-orbita .pie-marca .wm { font-size: 20px; }
-.pie-orbita .isotipo .d { fill: #4d7cff; }
 .pie-orbita strong { color: #f3f4f8; font-weight: 600; }
 .pie-orbita a { color: #a4a8ba; }
 .pie-orbita a:hover { color: #fff; }

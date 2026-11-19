@@ -84,7 +84,7 @@ describe('afiliados', () => {
 
     expect(await screen.findByText('https://orbita.test/?ref=juan-socio-ab12')).toBeInTheDocument();
     expect(screen.getByText('Kiosco Ana')).toBeInTheDocument();
-    expect(screen.getByText('14/12/2026 y 13/1/2027')).toBeInTheDocument();
+    expect(screen.queryByText(/días después/)).not.toBeInTheDocument();
     expect(sesionAfiliado.get()).toBe('jwt-afiliado');
   });
 });

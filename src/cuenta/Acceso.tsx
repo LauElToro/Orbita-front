@@ -1,12 +1,13 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { api, referido, sesionCliente } from '../api';
+import { api, codigoDeReferido, referido, sesionCliente } from '../api';
 import { Oferta } from '../components/Planes';
 import { Logo } from '../components/Sitio';
 import { Check, ErrorMsg } from '../components/ui';
 import { pesos } from '../format';
 import type { Plan, PlanId } from '../types';
+import { CampoReferidoAcceso, useCodigoReferido } from './Referidos';
 
 const CHARLA: { de: 'cliente' | 'ia'; texto: string; hora: string }[] = [
   { de: 'cliente', texto: 'Hola! ¿Tenés turno para corte mañana a la tarde?', hora: '23:41' },
@@ -188,6 +189,10 @@ export function Registro() {
   });
   const [terminos, setTerminos] = useState(false);
   const [privacidad, setPrivacidad] = useState(false);
+  const [refTexto, setRefTexto] = useState(() => codigoDeReferido(params.get('ref') ?? '') || referido.get() || '');
+  const [verRef, setVerRef] = useState(Boolean(refTexto) || params.has('referido'));
+  const ref = useCodigoReferido(refTexto);
+  const refBloquea = ref.estado !== 'vacio' && ref.estado !== 'valido';
   const set = (patch: Partial<typeof form>) => setForm((f) => ({ ...f, ...patch }));
 
   const registrar = useMutation({
@@ -199,7 +204,7 @@ export function Registro() {
           planId: form.planId || undefined,
           aceptaTerminos: terminos,
           aceptaPrivacidad: privacidad,
-          ref: referido.get(),
+          ref: ref.codigo || undefined,
         },
       }),
     onSuccess: ({ token }) => {
@@ -209,7 +214,7 @@ export function Registro() {
   });
   const google = useMutation({
     mutationFn: () =>
-      api<{ url: string }>('/cuenta/google/iniciar', { method: 'POST', body: { modo: 'registro', ref: referido.get() } }),
+      api<{ url: string }>('/cuenta/google/iniciar', { method: 'POST', body: { modo: 'registro', ref: ref.codigo || undefined } }),
     onSuccess: ({ url }) => location.assign(url),
   });
   const enviar = (e: FormEvent) => {
@@ -225,8 +230,17 @@ export function Registro() {
           Creá tu cuenta y <span>empezá a explorar</span>
         </h1>
         <p className="auth-sub">Con Google usamos tu nombre y tu email. El negocio y el plan los completás después, y la cuenta queda sin plan.</p>
+        {verRef ? (
+          <CampoReferidoAcceso value={refTexto} onChange={setRefTexto} estado={ref.estado} />
+        ) : (
+          <p className="auth-ref-toggle">
+            <button type="button" className="link" onClick={() => setVerRef(true)}>
+              ¿Te recomendaron? Cargá el código de referido
+            </button>
+          </p>
+        )}
         <ErrorMsg error={google.error} />
-        <BotonGoogle pending={google.isPending} onClick={() => google.mutate()} />
+        <BotonGoogle pending={google.isPending} disabled={refBloquea} onClick={() => google.mutate()} />
         <p className="auth-separador">o con email</p>
         <label>
           Plan
@@ -282,7 +296,7 @@ export function Registro() {
           .
         </Check>
         <ErrorMsg error={registrar.error} />
-        <button className="auth-submit" type="submit" disabled={registrar.isPending || !terminos || !privacidad}>
+        <button className="auth-submit" type="submit" disabled={registrar.isPending || !terminos || !privacidad || refBloquea}>
           {registrar.isPending ? 'Creando cuenta...' : 'Crear mi cuenta'}
         </button>
         <p className="auth-cambio">
@@ -304,14 +318,17 @@ export function Ingresar() {
       navigate('/cuenta', { replace: true });
     },
   });
+  const [params] = useSearchParams();
+  const refGuardado = codigoDeReferido(params.get('ref') ?? '') || referido.get();
   const google = useMutation({
-    mutationFn: () => api<{ url: string }>('/cuenta/google/iniciar', { method: 'POST', body: { modo: 'login' } }),
+    mutationFn: () => api<{ url: string }>('/cuenta/google/iniciar', { method: 'POST', body: { modo: 'login', ref: refGuardado } }),
     onSuccess: ({ url }) => location.assign(url),
   });
   const enviar = (e: FormEvent) => {
     e.preventDefault();
     login.mutate();
   };
+  const registro = refGuardado ? `/registro?ref=${encodeURIComponent(refGuardado)}` : '/registro';
   return (
     <Marco>
       <form className="auth-form" onSubmit={enviar}>
@@ -338,7 +355,18 @@ export function Ingresar() {
         <p className="auth-separador">o</p>
         <BotonGoogle pending={google.isPending} onClick={() => google.mutate()} />
         <p className="auth-cambio">
-          ¿No tenés cuenta? <Link to="/registro">Registrate</Link>
+          ¿No tenés cuenta? <Link to={registro}>Registrate</Link>
+        </p>
+        <p className="auth-cambio small">
+          {refGuardado ? (
+            <>
+              Tenés el código de referido <strong>{refGuardado}</strong>: se aplica al crear tu cuenta.
+            </>
+          ) : (
+            <>
+              ¿Te recomendaron? <Link to="/registro?referido=1">Registrate con tu link de referido</Link>
+            </>
+          )}
         </p>
       </form>
     </Marco>

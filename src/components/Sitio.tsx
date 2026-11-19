@@ -1,16 +1,13 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { EMPRESA } from '../legal/empresa';
+import { Marca } from './Marca';
 
 export function Logo({ claro = false }: { claro?: boolean }) {
   return (
     <span className={`logo ${claro ? 'logo-claro' : ''}`}>
-      <svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true">
-        <circle cx="16" cy="16" r="6.5" fill="currentColor" />
-        <ellipse cx="16" cy="16" rx="14" ry="6" fill="none" stroke="currentColor" strokeWidth="1.6" transform="rotate(-25 16 16)" opacity="0.7" />
-        <circle cx="28" cy="10.5" r="2.2" fill="#ffb648" />
-      </svg>
-      Orbita
+      <Marca />
+      órbita
     </span>
   );
 }

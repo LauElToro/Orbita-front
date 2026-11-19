@@ -69,6 +69,8 @@ export function cuenta(overrides: Partial<Cuenta> = {}, plan: Plan = PLANES[1]):
     planElegido: true,
     suscripcion: { medio: 'mercadopago', estadoPago: 'al_dia', vencimiento: '2026-12-14T15:00:00.000Z', importe: plan.precioMercadoPago, mpInitPoint: null },
     transferencia: null,
+    referido: null,
+    referidoEditable: true,
     onboarding: { paso: 0, completado: null, requisitos: { pago: true, canal: false, prompt: false } },
     ...overrides,
   };

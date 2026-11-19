@@ -5,6 +5,7 @@ import { api, sesionAfiliado } from '../api';
 import { Logo } from '../components/Sitio';
 import { Badge, Check, Copiar, ErrorMsg, Section } from '../components/ui';
 import { Clave, IconoMail, Marco } from '../cuenta/Acceso';
+import { EditorCodigo } from '../cuenta/Referidos';
 import { pesos } from '../format';
 import type { ComisionEstado, PanelAfiliado } from '../types';
 
@@ -41,8 +42,7 @@ export function AfiliadosRegistro() {
           Recomendá Orbita y <span>llevate el 50%</span>
         </h1>
         <p className="auth-sub">
-          Compartí tu link. Por cada comercio que contrate un plan con él, te pagamos la mitad de su primer pago entre 30 y 60 días después de
-          que lo abone. No hace falta ser cliente.
+          Compartí tu link. Por cada comercio que contrate un plan con él, te pagamos la mitad de su primer pago. No hace falta ser cliente.
         </p>
         <label>
           Tu nombre
@@ -238,11 +238,16 @@ export function AfiliadosPanel() {
         <>
           <Section title="Tu link de referidos">
             <p className="muted">
-              Cada comercio que contrate un plan desde este link (durante 30 días desde que lo abre) te genera el {d.porcentaje}% de su primer pago,
-              que te transferimos entre {d.plazo.desde} y {d.plazo.hasta} días después de que el comercio lo abone. El plan Personalizado no suma
-              comisión.
+              Cada comercio que contrate un plan desde este link (durante 30 días desde que lo abre) te genera el {d.porcentaje}% de su primer pago.
+              El plan Personalizado no suma comisión.
             </p>
             <Copiar texto={d.link} />
+            <EditorCodigo
+              panel={d}
+              guardar={(codigo) =>
+                api<PanelAfiliado>('/afiliados/me', { method: 'PATCH', body: { codigo } }).then((data) => qc.setQueryData(['afiliado'], data))
+              }
+            />
           </Section>
 
           <Section title="Resumen">
@@ -289,7 +294,6 @@ export function AfiliadosPanel() {
                   <tr>
                     <th>Primer pago</th>
                     <th>Importe</th>
-                    <th>Se paga entre</th>
                     <th>Estado</th>
                   </tr>
                 </thead>
@@ -298,9 +302,6 @@ export function AfiliadosPanel() {
                     <tr key={c.id}>
                       <td>{fecha(c.createdAt)}</td>
                       <td>{pesos(c.importe)}</td>
-                      <td>
-                        {fecha(c.pagableDesde)} y {fecha(c.pagarAntes)}
-                      </td>
                       <td>
                         <Badge tone={ESTADO_COMISION[c.estado].tone}>{ESTADO_COMISION[c.estado].label}</Badge>
                         {c.pagadaEn && <small className="muted"> {fecha(c.pagadaEn)}</small>}

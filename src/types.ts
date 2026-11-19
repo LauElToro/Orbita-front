@@ -179,6 +179,8 @@ export interface Cuenta {
     topes: { dia: number; semana: number; mes: number };
   };
   plan: Plan;
+  /** Plan elegido que entra en vigencia cuando se acredita el pago de su importe. */
+  planPendiente?: Plan | null;
   planElegido: boolean;
   canales: Canal[];
   web: IntegracionWeb;
@@ -191,6 +193,10 @@ export interface Cuenta {
     debitoActivo?: boolean;
   } | null;
   transferencia: { alias: string; importe: number; concepto: string } | null;
+  /** Link de referido con el que quedó vinculada la cuenta. */
+  referido: { codigo: string } | null;
+  /** Se puede cargar uno a mano: no tiene referido y todavía no pagó. */
+  referidoEditable: boolean;
   onboarding: { paso: number; completado: string | null; requisitos: Requisitos };
 }
 

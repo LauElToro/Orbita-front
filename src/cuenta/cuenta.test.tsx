@@ -121,6 +121,50 @@ describe('registro y acceso del cliente', () => {
     }
   });
 
+  it('se registra con el código del link de referido y no deja seguir con uno inexistente', async () => {
+    let body: Record<string, unknown> = {};
+    mockApi({
+      'GET /publico/planes': PUBLICOS,
+      'GET /publico/referido/juan-socio': { valido: true },
+      'GET /publico/referido/no-existe': { valido: false },
+      'POST /cuenta/registro': (init: RequestInit) => {
+        body = JSON.parse(String(init.body));
+        return { status: 201, body: { token: 'jwt-nuevo' } };
+      },
+      'GET /cuenta/me': cuenta(),
+    });
+    renderApp('/registro?ref=juan-socio');
+    const campo = await screen.findByLabelText(/Código o link de referido/);
+    expect(campo).toHaveValue('juan-socio');
+    expect(await screen.findByText('Código de referido válido.')).toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText('Nombre del negocio'), 'Peluquería Luna');
+    await userEvent.type(screen.getByLabelText('Rubro'), 'Estética');
+    await userEvent.type(screen.getByLabelText('Tu nombre'), 'Sofía Pérez');
+    await userEvent.type(screen.getByLabelText('Email'), 'sofia@luna.com');
+    await userEvent.type(screen.getByLabelText(/^Contraseña/), 'clave-segura-1');
+    for (const c of screen.getAllByRole('checkbox')) await userEvent.click(c);
+    const crear = screen.getByRole('button', { name: 'Crear mi cuenta' });
+
+    await userEvent.clear(campo);
+    await userEvent.type(campo, 'no-existe');
+    expect(await screen.findByText('No encontramos ese código de referido.')).toBeInTheDocument();
+    expect(crear).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Continuar con Google' })).toBeDisabled();
+
+    await userEvent.clear(campo);
+    await userEvent.type(campo, 'https://orbita-emp.com/?ref=juan-socio');
+    await waitFor(() => expect(crear).toBeEnabled());
+    await userEvent.click(crear);
+    await waitFor(() => expect(body).toMatchObject({ ref: 'juan-socio' }));
+  });
+
+  it('desde el login ofrece registrarse con un link de referido', async () => {
+    mockApi({ 'GET /publico/planes': PUBLICOS });
+    renderApp('/ingresar');
+    await userEvent.click(await screen.findByRole('link', { name: 'Registrate con tu link de referido' }));
+    expect(await screen.findByLabelText(/Código o link de referido/)).toHaveValue('');
+  });
+
   it('ingresa, muestra errores y separa la sesión del panel del equipo', async () => {
     let intentos = 0;
     const fetch = mockApi({
@@ -489,6 +533,7 @@ describe('demo', () => {
     });
     renderApp('/cuenta/demo');
     expect(await screen.findByText('Todavía no cargaste información')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Referidos' })).toHaveAttribute('href', '/cuenta/referidos');
     await userEvent.click(screen.getByRole('button', { name: 'Usar datos de ejemplo' }));
     expect(await screen.findByText('stock.tsv')).toBeInTheDocument();
     expect(screen.getByText('Planilla · 12 filas')).toBeInTheDocument();
@@ -546,9 +591,9 @@ describe('panel del cliente', () => {
     expect(prompt).toEqual({ prompt: '### Qué hacemos extra' });
   });
 
-  it('cambia de plan y ve el historial de pagos', async () => {
+  it('cambia de plan sin cuadros del navegador y ve el historial de pagos', async () => {
     conSesion();
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const confirmar = vi.spyOn(window, 'confirm');
     let body: unknown = null;
     const c = lista(cuenta());
     mockApi({
@@ -567,6 +612,97 @@ describe('panel del cliente', () => {
     await userEvent.selectOptions(screen.getByLabelText('Plan'), 'completo');
     await userEvent.click(screen.getByRole('button', { name: 'Guardar cambio' }));
     await waitFor(() => expect(body).toEqual({ planId: 'completo' }));
+    expect(confirmar).not.toHaveBeenCalled();
+  });
+
+  it('con un cambio pendiente sigue mostrando el plan vigente', async () => {
+    conSesion();
+    mockApi({
+      'GET /cuenta/me': lista(cuenta({ planPendiente: PLANES[2] })),
+      'GET /publico/planes': PUBLICOS,
+      'GET /cuenta/pagos': [],
+    });
+    renderApp('/cuenta/plan');
+    expect(await screen.findByText(/Pasás al plan Completo cuando se acredite el pago/)).toBeInTheDocument();
+    await screen.findByRole('option', { name: /Completo/ });
+    expect(screen.getByLabelText('Plan')).toHaveValue('completo');
+    expect(screen.getByRole('button', { name: 'Guardar cambio' })).toBeDisabled();
+  });
+
+  it('sin referido carga un código desde Plan y pagos', async () => {
+    conSesion();
+    let body: unknown = null;
+    const c = cuenta();
+    mockApi({
+      'GET /cuenta/me': c,
+      'GET /publico/planes': PUBLICOS,
+      'GET /cuenta/pagos': [],
+      'GET /publico/referido/juan-socio': { valido: true },
+      'POST /cuenta/referido': (init: RequestInit) => {
+        body = JSON.parse(String(init.body));
+        return { body: { ...c, referido: { codigo: 'juan-socio' }, referidoEditable: false } };
+      },
+    });
+    renderApp('/cuenta/plan');
+    const campo = await screen.findByLabelText('Código de referido');
+    await userEvent.type(campo, 'https://orbita-emp.com/?ref=Juan-Socio');
+    expect(await screen.findByText('Código de referido válido.')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Aplicar' }));
+    await waitFor(() => expect(body).toEqual({ codigo: 'juan-socio' }));
+    const fijo = await screen.findByDisplayValue('juan-socio');
+    expect(fijo).toBeDisabled();
+    expect(screen.getByText(/Tu cuenta está vinculada a este link de referido/)).toBeInTheDocument();
+  });
+
+  it('con referido muestra el código sin poder editarlo', async () => {
+    conSesion();
+    mockApi({
+      'GET /cuenta/me': cuenta({ referido: { codigo: 'ana-recomienda' }, referidoEditable: false }),
+      'GET /publico/planes': PUBLICOS,
+      'GET /cuenta/pagos': [],
+    });
+    renderApp('/cuenta/plan');
+    expect(await screen.findByLabelText('Código de referido')).toHaveValue('ana-recomienda');
+    expect(screen.getByLabelText('Código de referido')).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Aplicar' })).not.toBeInTheDocument();
+  });
+
+  it('activa su link de referidos desde el panel y lo personaliza', async () => {
+    conSesion();
+    const panel = {
+      nombre: 'Sofía Pérez',
+      email: 'sofia@luna.com',
+      codigo: 'sofia-perez-ab12',
+      link: 'https://orbita-emp.com/?ref=sofia-perez-ab12',
+      porcentaje: 50,
+      plazo: { desde: 30, hasta: 60 },
+      datosCobro: null,
+      totales: { pendiente: 0, pagada: 0 },
+      referidos: [],
+      comisiones: [],
+    };
+    let patch: unknown = null;
+    mockApi({
+      'GET /cuenta/me': lista(cuenta()),
+      'GET /cuenta/afiliado': { afiliado: null },
+      'POST /cuenta/afiliado': panel,
+      'PATCH /cuenta/afiliado': (init: RequestInit) => {
+        patch = JSON.parse(String(init.body));
+        return { body: { ...panel, codigo: 'luna', link: 'https://orbita-emp.com/?ref=luna' } };
+      },
+    });
+    renderApp('/cuenta/referidos');
+    const activar = await screen.findByRole('button', { name: 'Activar mi link de referidos' });
+    expect(activar).toBeDisabled();
+    await userEvent.click(screen.getByRole('checkbox'));
+    await userEvent.click(activar);
+    expect(await screen.findByText(panel.link)).toBeInTheDocument();
+    const codigo = screen.getByLabelText('Código de referido');
+    await userEvent.clear(codigo);
+    await userEvent.type(codigo, 'Luna');
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar link' }));
+    expect(await screen.findByText('https://orbita-emp.com/?ref=luna')).toBeInTheDocument();
+    expect(patch).toEqual({ codigo: 'luna' });
   });
 
   it('el plan Personalizado no se cambia desde el panel', async () => {

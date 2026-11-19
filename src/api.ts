@@ -33,7 +33,19 @@ export const referido = {
     localStorage.removeItem(REF_KEY);
     return undefined;
   },
+  limpiar() {
+    localStorage.removeItem(REF_KEY);
+  },
 };
+
+/** Acepta el código solo o el link completo (`...?ref=codigo`) y devuelve el código en minúsculas. */
+export function codigoDeReferido(texto: string): string {
+  const limpio = texto.trim();
+  const enLink = limpio.match(/[?&]ref=([^&#\s]+)/i)?.[1];
+  return (enLink ?? limpio).trim().toLowerCase();
+}
+
+export const CODIGO_REFERIDO = /^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/;
 
 export class ApiError extends Error {
   constructor(

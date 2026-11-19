@@ -8,6 +8,7 @@ import { Badge, ErrorMsg, PageHead, Section, UsoBar } from '../components/ui';
 import { ESTADO_PAGO, MEDIO, fecha, pesos } from '../format';
 import type { Cuenta, Pago, Plan, PlanId, Turno, Uso } from '../types';
 import { CanalesForm, GuiaCanales, GuiaWeb, PagoBloque, WebForm, PerfilForm, Simulador, TextosForm } from './formularios';
+import { ReferidoPlan, ReferidosCuenta } from './Referidos';
 import { pasosDe, Tutorial } from './Tutorial';
 import { useAccionCuenta, useCuenta } from './useCuenta';
 
@@ -65,6 +66,7 @@ function gruposDe(c: Cuenta | undefined): GrupoNav[] {
       titulo: 'Cuenta',
       items: [
         { to: '/cuenta/plan', label: 'Plan y pagos', icono: 'plan' },
+        { to: '/cuenta/referidos', label: 'Referidos', icono: 'clientes' },
         { to: '/cuenta/ajustes', label: 'Ajustes', icono: 'ajustes' },
       ],
     },
@@ -544,18 +546,22 @@ export function PlanYPagos() {
   const cuenta = useCuentaActual();
   const planes = useQuery({ queryKey: ['publico-planes'], queryFn: () => api<Plan[]>('/publico/planes') });
   const pagos = useQuery({ queryKey: ['cuenta-pagos'], queryFn: () => api<Pago[]>('/cuenta/pagos') });
-  const [planId, setPlanId] = useState<PlanId>(cuenta.plan.id);
+  const elegido = cuenta.planPendiente?.id ?? cuenta.plan.id;
+  const [planId, setPlanId] = useState<PlanId>(elegido);
+  const [aviso, setAviso] = useState('');
   const cambiar = useAccionCuenta();
   const personalizado = cuenta.plan.id === 'personalizado';
+  const alDia = cuenta.suscripcion?.estadoPago === 'al_dia';
+  const pendiente = cuenta.planPendiente;
 
   const guardar = () => {
     const plan = planes.data?.find((p) => p.id === planId);
     if (plan && cuenta.canales.length > plan.maxCanales) {
-      alert(`El plan ${plan.nombre} admite ${plan.maxCanales} canal(es). Quitá canales antes de cambiar.`);
+      setAviso(`El plan ${plan.nombre} admite ${plan.maxCanales} canal(es). Quitá canales antes de cambiar.`);
       return;
     }
-    const body = planId === cuenta.plan.id ? {} : { planId };
-    if (confirm('El nuevo importe se aplica desde el próximo período. ¿Confirmás el cambio?')) cambiar.mutate({ path: 'plan', method: 'PATCH', body });
+    setAviso('');
+    cambiar.mutate({ path: 'plan', method: 'PATCH', body: { planId } });
   };
 
   return (
@@ -570,6 +576,7 @@ export function PlanYPagos() {
           </p>
         )}
       </Section>
+      <ReferidoPlan cuenta={cuenta} />
       {cuenta.planElegido && <Section title="Cambiar de plan">
         {personalizado ? (
           <p>Tu plan es Personalizado. Para cambios de alcance escribinos y lo coordinamos.</p>
@@ -583,10 +590,24 @@ export function PlanYPagos() {
                   </option>
                 ))}
               </select>
-              <button onClick={guardar} disabled={cambiar.isPending || planId === cuenta.plan.id}>
+              <button onClick={guardar} disabled={cambiar.isPending || planId === elegido}>
                 Guardar cambio
               </button>
             </div>
+            {pendiente ? (
+              <p className="small muted">
+                Seguís con el plan {cuenta.plan.nombre}. Pasás al plan {pendiente.nombre} cuando se acredite el pago de{' '}
+                {pesos(cuenta.suscripcion?.importe ?? pendiente.precioMercadoPago)}
+                {alDia && cuenta.suscripcion ? `, a partir del vencimiento del ${fecha(cuenta.suscripcion.vencimiento)}` : ''}.
+                Para quedarte con el plan {cuenta.plan.nombre}, elegilo y guardá.
+              </p>
+            ) : (
+              <p className="small muted">
+                El cambio se aplica cuando se acredita el pago del plan nuevo
+                {alDia ? ', desde el próximo período' : ''}. Hasta entonces seguís con el plan {cuenta.plan.nombre}.
+              </p>
+            )}
+            {aviso && <p className="error">{aviso}</p>}
             <ErrorMsg error={cambiar.error} />
           </>
         )}
@@ -617,6 +638,18 @@ export function PlanYPagos() {
           </table>
         )}
       </Section>
+    </>
+  );
+}
+
+export function Referidos() {
+  return (
+    <>
+      <PageHead
+        title="Referidos"
+        sub="Cualquier cliente puede recomendar Orbita. Por cada comercio que contrate con tu link te llevás el 50% de su primer pago."
+      />
+      <ReferidosCuenta titulo="Tu link" />
     </>
   );
 }

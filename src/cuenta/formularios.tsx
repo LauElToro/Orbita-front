@@ -643,6 +643,7 @@ export function PagoBloque({ cuenta }: { cuenta: Cuenta }) {
     <div className="pago-bloque">
       <p>
         Importe mensual: <strong>{pesos(sub.importe)}</strong>
+        {cuenta.planPendiente && ` (plan ${cuenta.planPendiente.nombre})`}
       </p>
       <p className="small muted">Te llevamos a Mercado Pago para aprobar el débito automático mensual. Podés cancelarlo cuando quieras.</p>
       <ErrorMsg error={mp.error} />
