@@ -625,6 +625,42 @@ describe('panel del cliente', () => {
     expect(confirmar).not.toHaveBeenCalled();
   });
 
+  it('un plan sin pagos se da de baja sin reembolso y deja de pedir el cobro', async () => {
+    conSesion();
+    const confirmar = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const pendiente = {
+      medio: 'mercadopago' as const,
+      estadoPago: 'pendiente' as const,
+      vencimiento: '2026-11-19T15:00:00.000Z',
+      importe: 42000,
+      mpInitPoint: null,
+      tuvoPagos: false as const,
+    };
+    const c = cuenta({ suscripcion: pendiente, planPendiente: PLANES[0] });
+    const cerrada = {
+      ...c,
+      suscripcion: { ...pendiente, estadoPago: 'impago' as const, canceladaEn: '2026-11-22T15:00:00.000Z' },
+    };
+    mockApi({
+      'GET /cuenta/me': c,
+      'GET /publico/planes': PUBLICOS,
+      'GET /cuenta/pagos': [],
+      'POST /cuenta/baja': cerrada,
+      'POST /cuenta/recontratar': c,
+    });
+    renderApp('/cuenta/plan');
+    expect(await screen.findByRole('button', { name: 'Pagar con Mercado Pago' })).toBeInTheDocument();
+    expect(screen.getByText(/Como no pagaste, no se cobra nada/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Dar de baja' }));
+    expect(String(confirmar.mock.calls[0][0])).toMatch(/no se cobra nada/);
+    expect(await screen.findByText(/Como no llegaste a pagar, no se cobra nada/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Pagar con Mercado Pago' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Cambiar de plan' })).not.toBeInTheDocument();
+    expect(screen.queryByText(/El plan sigue hasta/)).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Volver a contratar' }));
+    expect(await screen.findByRole('button', { name: 'Pagar con Mercado Pago' })).toBeInTheDocument();
+  });
+
   it('con un cambio pendiente sigue mostrando el plan vigente', async () => {
     conSesion();
     mockApi({

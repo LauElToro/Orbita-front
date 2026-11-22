@@ -22,10 +22,11 @@ describe('checkout sin sesión', () => {
     referido.guardar('juan-socio-ab12');
     renderApp('/checkout?plan=completo');
     expect(await screen.findByRole('heading', { name: 'Plan Completo' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Activá tu IA' })).toBeInTheDocument();
     expect(screen.getByLabelText('Plan')).toHaveValue('completo');
 
-    await userEvent.type(screen.getByLabelText('Email'), 'ana@kiosco.com');
-    const pagar = screen.getByRole('button', { name: 'Pagar con Mercado Pago' });
+    await userEvent.type(screen.getByLabelText('Tu email'), 'ana@kiosco.com');
+    const pagar = screen.getByRole('button', { name: 'Pagar y activar mi cuenta' });
     expect(pagar).toBeDisabled();
     for (const c of screen.getAllByRole('checkbox')) await userEvent.click(c);
     await userEvent.click(pagar);

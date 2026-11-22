@@ -611,31 +611,51 @@ function Extras({ cuenta }: { cuenta: Cuenta }) {
   );
 }
 
+/** Un plan sin ningún pago no tiene período abonado: la baja no deja nada que cobrar. */
+function sinCobrar(cuenta: Cuenta) {
+  const sub = cuenta.suscripcion;
+  return Boolean(sub && sub.estadoPago !== 'al_dia' && sub.tuvoPagos !== true);
+}
+
 export function BotonBaja({ cuenta }: { cuenta: Cuenta }) {
   const baja = useAccionCuenta();
+  const volver = useAccionCuenta();
   const sub = cuenta.suscripcion;
   if (!sub) return null;
   if (sub.canceladaEn) {
-    return (
-      <p className="small">
-        Diste de baja el {fecha(sub.canceladaEn)}. El plan sigue hasta el {fecha(sub.vencimiento)}. No hay reembolso y no se vuelve a cobrar.
-      </p>
-    );
+    if (sub.estadoPago === 'al_dia') {
+      return (
+        <p className="small">
+          Diste de baja el {fecha(sub.canceladaEn)}. El plan sigue hasta el {fecha(sub.vencimiento)}. No hay reembolso y no se vuelve a cobrar.
+        </p>
+      );
+    }
+    if (sub.tuvoPagos === false) {
+      return (
+        <div>
+          <p className="small">Diste de baja el {fecha(sub.canceladaEn)}. Como no llegaste a pagar, no se cobra nada.</p>
+          <button type="button" className="secondary" disabled={volver.isPending} onClick={() => volver.mutate({ path: 'recontratar' })}>
+            {volver.isPending ? 'Reabriendo...' : 'Volver a contratar'}
+          </button>
+          <ErrorMsg error={volver.error} />
+        </div>
+      );
+    }
+    return <p className="small">Diste de baja el {fecha(sub.canceladaEn)}. Ese período ya cerró.</p>;
   }
+  const gratis = sinCobrar(cuenta);
   return (
     <div>
+      {gratis && <p className="small muted">Si no vas a usar el plan, dalo de baja. Como no pagaste, no se cobra nada.</p>}
       <button
         type="button"
         className="secondary"
         disabled={baja.isPending}
         onClick={() => {
-          if (
-            confirm(
-              'La baja es inmediata. No devolvemos el dinero del período ya pago. El plan sigue hasta el vencimiento y después no se vuelve a cobrar. ¿Confirmás?',
-            )
-          ) {
-            baja.mutate({ path: 'baja' });
-          }
+          const aviso = gratis
+            ? 'Todavía no pagaste. La baja es inmediata y no se cobra nada. ¿Confirmás?'
+            : 'La baja corta el débito ahora. No devolvemos el período ya pago. El plan sigue hasta el vencimiento y después no se vuelve a cobrar. ¿Confirmás?';
+          if (confirm(aviso)) baja.mutate({ path: 'baja' });
         }}
       >
         {baja.isPending ? 'Dando de baja...' : 'Dar de baja'}
@@ -656,6 +676,7 @@ export function PlanYPagos() {
   const personalizado = cuenta.plan.id === 'personalizado';
   const alDia = cuenta.suscripcion?.estadoPago === 'al_dia';
   const pendiente = cuenta.planPendiente;
+  const bajaSinPago = Boolean(cuenta.suscripcion?.canceladaEn && cuenta.suscripcion.tuvoPagos === false);
 
   const guardar = () => {
     const plan = planes.data?.find((p) => p.id === planId);
@@ -669,8 +690,17 @@ export function PlanYPagos() {
 
   return (
     <>
-      <PageHead title="Plan y pagos" sub="Tu abono, el próximo vencimiento y los pagos registrados." />
-      <Section title="Pago">
+      <PageHead
+        title="Plan y pagos"
+        sub={
+          bajaSinPago
+            ? 'Este plan no se pagó y está dado de baja. No se cobra nada.'
+            : alDia
+              ? 'Tu abono, el próximo vencimiento y los pagos registrados.'
+              : 'Todavía no pagaste. Podés pagar ahora o dar de baja: si no hubo pago, no se cobra nada.'
+        }
+      />
+      <Section title={bajaSinPago ? 'Estado del plan' : 'Pago'}>
         <PagoBloque cuenta={cuenta} />
         {cuenta.suscripcion?.estadoPago === 'al_dia' && (
           <p className="small muted">
@@ -681,7 +711,7 @@ export function PlanYPagos() {
         <BotonBaja cuenta={cuenta} />
       </Section>
       <ReferidoPlan cuenta={cuenta} />
-      {cuenta.planElegido && <Section title="Cambiar de plan">
+      {cuenta.planElegido && !bajaSinPago && <Section title="Cambiar de plan">
         {personalizado ? (
           <p>Tu plan es Personalizado. Para cambios de alcance escribinos y lo coordinamos.</p>
         ) : (
@@ -700,15 +730,26 @@ export function PlanYPagos() {
             </div>
             {pendiente ? (
               <p className="small muted">
-                Seguís con el plan {cuenta.plan.nombre}. Pasás al plan {pendiente.nombre} cuando se acredite el pago de{' '}
-                {pesos(cuenta.suscripcion?.importe ?? pendiente.precioMercadoPago)}
-                {alDia && cuenta.suscripcion ? `, a partir del vencimiento del ${fecha(cuenta.suscripcion.vencimiento)}` : ''}.
-                Para quedarte con el plan {cuenta.plan.nombre}, elegilo y guardá.
+                {alDia ? (
+                  <>
+                    Seguís con el plan {cuenta.plan.nombre}. Pasás al plan {pendiente.nombre} cuando se acredite el pago de{' '}
+                    {pesos(cuenta.suscripcion?.importe ?? pendiente.precioMercadoPago)}
+                    {cuenta.suscripcion ? `, a partir del vencimiento del ${fecha(cuenta.suscripcion.vencimiento)}` : ''}. Para quedarte
+                    con el plan {cuenta.plan.nombre}, elegilo y guardá.
+                  </>
+                ) : (
+                  <>
+                    Todavía no pagaste. El cobro va a ser el plan {pendiente.nombre} (
+                    {pesos(cuenta.suscripcion?.importe ?? pendiente.precioMercadoPago)}). Cuando se acredite, reemplaza al plan{' '}
+                    {cuenta.plan.nombre}. Para quedarte con {cuenta.plan.nombre}, elegilo y guardá.
+                  </>
+                )}
               </p>
             ) : (
               <p className="small muted">
-                El cambio se aplica cuando se acredita el pago del plan nuevo
-                {alDia ? ', desde el próximo período' : ''}. Hasta entonces seguís con el plan {cuenta.plan.nombre}.
+                {alDia
+                  ? `El cambio se aplica cuando se acredita el pago del plan nuevo, desde el próximo período. Hasta entonces seguís con el plan ${cuenta.plan.nombre}.`
+                  : `Elegí el plan y guardá. Se cobra ese importe cuando pagás. Hasta que se acredite seguís en el plan ${cuenta.plan.nombre}.`}
               </p>
             )}
             {aviso && <p className="error">{aviso}</p>}

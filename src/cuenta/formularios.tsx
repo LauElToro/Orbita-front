@@ -730,6 +730,7 @@ export function PagoBloque({ cuenta }: { cuenta: Cuenta }) {
     onSuccess: ({ initPoint }) => location.assign(initPoint),
   });
   if (!sub) return null;
+  if (sub.canceladaEn && (sub.estadoPago === 'al_dia' || sub.tuvoPagos === false)) return null;
   if (sub.estadoPago === 'al_dia') {
     return (
       <p className="ok-msg">
@@ -747,16 +748,20 @@ export function PagoBloque({ cuenta }: { cuenta: Cuenta }) {
   }
   return (
     <div className="pago-bloque">
+      <p className="small muted">Todavía no hay un pago</p>
       <p>
-        Importe mensual: <strong>{pesos(sub.importe)}</strong>
-        {cuenta.planPendiente && ` (plan ${cuenta.planPendiente.nombre})`}
+        <strong>{pesos(sub.importe)}</strong> por mes
+        {cuenta.planPendiente ? ` · plan ${cuenta.planPendiente.nombre}` : ` · plan ${cuenta.plan.nombre}`}
       </p>
-      <p className="small muted">Te llevamos a Mercado Pago para aprobar el débito automático mensual. La baja se hace desde el panel: corta el débito y no devuelve el período ya pago.</p>
+      <p className="small muted">
+        Mercado Pago te pide aprobar el débito mensual. El primer cobro es el que activa la cuenta. Si no vas a pagar, dalo de baja: no se cobra
+        nada.
+      </p>
       <ErrorMsg error={mp.error} />
       <button onClick={() => (sub.mpInitPoint ? location.assign(sub.mpInitPoint) : mp.mutate())} disabled={mp.isPending}>
         {mp.isPending ? 'Abriendo Mercado Pago...' : 'Pagar con Mercado Pago'}
       </button>
-      <p className="small muted">Cuando se acredite el pago, arrancamos con el tutorial y se habilita el resto del panel.</p>
+      <p className="small muted">Cuando Mercado Pago acredita el pago, se habilita el panel.</p>
     </div>
   );
 }

@@ -209,6 +209,8 @@ export interface Cuenta {
     mpInitPoint: string | null;
     debitoActivo?: boolean;
     canceladaEn?: string | null;
+    /** False si la cuenta todavía no registró ningún pago. */
+    tuvoPagos?: boolean;
   } | null;
   whatsapp?: { listo: boolean; appId: string; configId: string; version: string };
   redes?: { facebook: { listo: boolean }; instagram: { listo: boolean }; tiktok: { listo: boolean } };
