@@ -15,8 +15,8 @@ export function Terminos() {
         <h2>1. Partes y aceptación</h2>
         <p>
           Estos Términos y Condiciones (los <strong>"Términos"</strong>) regulan el uso de la plataforma {EMPRESA.marca} (el{' '}
-          <strong>"Servicio"</strong>), provista por {EMPRESA.razonSocial}, CUIT {EMPRESA.cuit}, con domicilio en {EMPRESA.domicilio} (
-          <strong>"Orbita"</strong>), y la persona humana o jurídica que se registra o contrata un plan (el <strong>"Cliente"</strong>).
+          <strong>"Servicio"</strong>), operada por Orbita (<strong>"Orbita"</strong>), y la persona humana o jurídica que se registra o
+          contrata un plan (el <strong>"Cliente"</strong>).
         </p>
         <p>
           Al marcar la casilla de aceptación, registrarse, pagar o usar el Servicio, el Cliente declara haber leído, entendido y aceptado estos

@@ -57,12 +57,11 @@ export function SitioFooter({ className, logo = <Logo claro /> }: { className?: 
         <div>
           <strong>Contacto</strong>
           <a href={`mailto:${EMPRESA.soporte}`}>{EMPRESA.soporte}</a>
-          <span className="small">{EMPRESA.domicilio}</span>
         </div>
       </div>
       <p className="small site-legal">
-        © {new Date().getFullYear()} {EMPRESA.razonSocial} · CUIT {EMPRESA.cuit}. WhatsApp, Instagram y TikTok son marcas de sus
-        respectivos titulares; Orbita no está afiliada ni patrocinada por ellos.
+        © {new Date().getFullYear()} {EMPRESA.marca}. WhatsApp, Instagram y TikTok son marcas de sus respectivos titulares; Orbita no está
+        afiliada ni patrocinada por ellos.
       </p>
     </footer>
   );

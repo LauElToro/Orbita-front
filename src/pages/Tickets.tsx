@@ -117,7 +117,6 @@ function DetalleTicket({ ticket }: { ticket: Ticket }) {
           <dt>Contacto</dt>
           <dd>
             {ticket.nombre} · <a href={`mailto:${ticket.email}`}>{ticket.email}</a>
-            {ticket.telefono && ` · ${ticket.telefono}`}
           </dd>
           <dt>Rubro</dt>
           <dd>{ticket.rubro}</dd>

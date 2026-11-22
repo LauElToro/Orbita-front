@@ -14,9 +14,9 @@ export function Privacidad() {
 
         <h2>1. Quién es el responsable</h2>
         <p>
-          {EMPRESA.razonSocial}, CUIT {EMPRESA.cuit}, con domicilio en {EMPRESA.domicilio} (<strong>"Orbita"</strong>), es responsable de los
-          datos personales de los visitantes del sitio y de los comercios que contratan el Servicio (los <strong>"Clientes"</strong>), conforme
-          a la Ley 25.326 de Protección de los Datos Personales y su normativa complementaria. Contacto:{' '}
+          Orbita (<strong>"Orbita"</strong>) es responsable de los datos personales de los visitantes del sitio y de los comercios que
+          contratan el Servicio (los <strong>"Clientes"</strong>), conforme a la Ley 25.326 de Protección de los Datos Personales y su normativa
+          complementaria. El contacto es solo por email:{' '}
           <a href={`mailto:${EMPRESA.email}`}>{EMPRESA.email}</a>.
         </p>
         <p>

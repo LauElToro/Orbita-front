@@ -5,7 +5,7 @@ import { api } from '../api';
 import { PaginaSitio } from '../components/Sitio';
 import { Check, ErrorMsg } from '../components/ui';
 
-const VACIO = { nombre: '', email: '', telefono: '', empresa: '', rubro: '', necesidad: '', website: '' };
+const VACIO = { nombre: '', email: '', empresa: '', rubro: '', necesidad: '', website: '' };
 
 export function Contacto() {
   const [form, setForm] = useState(VACIO);
@@ -14,7 +14,7 @@ export function Contacto() {
     mutationFn: () =>
       api<{ ok: true }>('/publico/contacto', {
         method: 'POST',
-        body: { ...form, telefono: form.telefono || undefined, aceptaPrivacidad: acepta },
+        body: { ...form, aceptaPrivacidad: acepta },
       }),
   });
   const submit = (e: FormEvent) => {
@@ -49,10 +49,6 @@ export function Contacto() {
         <label>
           Email
           <input type="email" {...campo('email')} required />
-        </label>
-        <label>
-          Teléfono (opcional)
-          <input {...campo('telefono')} />
         </label>
         <label>
           Empresa

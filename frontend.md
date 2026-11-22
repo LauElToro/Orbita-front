@@ -14,10 +14,10 @@ Los dos paneles usan `PanelShell` (`components/Shell.tsx`): barra lateral con gr
 Hero con una conversación de ejemplo y el llamado "Probá la demo gratis" (lleva al registro), canales compatibles (WhatsApp, Instagram y TikTok), beneficios, cómo funciona en cuatro pasos, planes (de `GET /publico/planes`, solo precio de Mercado Pago), bloque de confianza (sin permanencia, 10 días para arrepentirse, datos protegidos, pagos seguros), preguntas frecuentes y llamado final. Cada plan lleva a `/registro?plan=...`; Personalizado lleva a `/contacto`.
 ### Documentos legales
 - `/terminos` y `/privacidad`: texto versionado. La versión está en `legal/empresa.ts` (`VERSION_LEGAL`) y tiene que coincidir con `LEGAL` del backend.
-- Los datos de la empresa (razón social, CUIT, domicilio, emails, jurisdicción) están en `EMPRESA`, en el mismo archivo. Hoy tienen marcadores entre corchetes que hay que completar antes de publicar.
+- Los datos públicos (marca, mails y jurisdicción) están en `EMPRESA`, en el mismo archivo. No se publican razón social, CUIT ni domicilio: la sociedad todavía no está formada. El contacto es solo por email.
 - `/arrepentimiento`: formulario del botón de arrepentimiento (Res. 424/2020). Devuelve un código de trámite. El link está en el footer de todas las páginas públicas.
 ### Contacto (`/contacto`)
-Pedido de IA personalizada: nombre, email, teléfono opcional, empresa, rubro y qué necesita. Hay que aceptar la Política de Privacidad. Tiene un campo trampa oculto contra bots.
+Pedido de IA personalizada: nombre, email, empresa, rubro y qué necesita. Hay que aceptar la Política de Privacidad. Tiene un campo trampa oculto contra bots.
 ### Página de pago (`/p/:token`)
 Sin cuenta, para fichas creadas por el equipo: plan, importe, vencimiento, uso del mes y el botón para aprobar el débito de Mercado Pago.
 ## Panel del comercio

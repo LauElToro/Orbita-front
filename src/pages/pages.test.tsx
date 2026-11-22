@@ -213,6 +213,7 @@ describe('páginas públicas', () => {
       },
     });
     renderApp('/contacto');
+    expect(screen.queryByLabelText(/Teléfono/)).not.toBeInTheDocument();
     await userEvent.type(screen.getByLabelText('Nombre'), 'Laura');
     await userEvent.type(screen.getByLabelText('Email'), 'laura@ferre.com');
     await userEvent.type(screen.getByLabelText('Empresa'), 'Ferretería Sur');

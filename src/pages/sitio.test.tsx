@@ -36,7 +36,9 @@ describe('sitio público', () => {
     mockApi({});
     renderApp('/terminos');
     expect(screen.getByRole('heading', { name: 'Términos y Condiciones del Servicio' })).toBeInTheDocument();
-    expect(screen.getByText(/Versión 2026-11-21/)).toBeInTheDocument();
+    expect(screen.getByText(/Versión 2026-11-22/)).toBeInTheDocument();
+    expect(screen.queryByText(/CUIT/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Domicilio legal/)).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: '15. Limitación de responsabilidad' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: '16. Indemnidad' })).toBeInTheDocument();
     expect(screen.getAllByText(/encargado del tratamiento/).length).toBeGreaterThan(0);
