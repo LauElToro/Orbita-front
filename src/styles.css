@@ -134,6 +134,13 @@ button:not(.secondary):not(.link):not(.chip):not(.icon-btn):not(.ghost-btn):not(
 .demo-body { padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem; }
 .burbuja { margin: 0; padding: 0.55rem 0.8rem; border-radius: 14px; max-width: min(85%, 36rem); font-size: 0.92rem; line-height: 1.4; white-space: pre-wrap; overflow-wrap: anywhere; }
 .burbuja img { display: block; max-width: 220px; border-radius: 10px; margin-bottom: 0.35rem; }
+.tool-producto { margin: 0 0 0.4rem; padding: 0.35rem; background: #fff; border: 1px solid var(--border); border-radius: 12px; max-width: 220px; }
+.tool-producto img { width: 100%; max-width: 200px; margin: 0; }
+.tool-producto figcaption { margin-top: 0.25rem; font-size: 0.75rem; color: var(--muted); }
+.tools-producto { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.catalogo-item { border: 1px solid var(--border); border-radius: 12px; padding: 0.75rem; margin: 0 0 0.6rem; }
+.cargar-archivo { display: block; }
+.cargar-archivo .falla { display: block; color: var(--bad); }
 .burbuja.in { background: #fff; align-self: flex-start; border-bottom-left-radius: 4px; }
 .burbuja.out { background: #dcd7ff; align-self: flex-end; border-bottom-right-radius: 4px; }
 

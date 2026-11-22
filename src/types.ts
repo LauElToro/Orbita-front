@@ -159,6 +159,7 @@ export interface Perfil {
   preguntas: { pregunta: string; respuesta: string }[];
   turnos?: { servicios: string; horarios: string; duracionMin: number; anticipacionHoras: number };
   catalogo?: ItemCatalogo[];
+  documentos?: { nombre: string; url: string; texto: string }[];
 }
 
 export interface IntegracionWeb {
@@ -225,6 +226,7 @@ export interface Simulacion {
   handoff: boolean;
   acciones: string[];
   imagen?: string;
+  herramientas?: { nombre: string; imagen: string }[];
 }
 
 export type FuncionDemo = 'stock' | 'horarios' | 'turnos' | 'pedidos' | 'derivar';

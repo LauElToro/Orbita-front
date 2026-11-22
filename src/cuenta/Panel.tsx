@@ -7,6 +7,7 @@ import { PanelShell, type GrupoNav, type ItemNav } from '../components/Shell';
 import { Badge, ErrorMsg, PageHead, Section, UsoBar } from '../components/ui';
 import { ESTADO_PAGO, MEDIO, fecha, pesos } from '../format';
 import type { Cuenta, Pago, Plan, PlanId, Turno, Uso } from '../types';
+import { CargarArchivo } from './CargarArchivo';
 import { CanalesForm, GuiaCanales, GuiaWeb, PagoBloque, WebForm, PerfilForm, Simulador, TextosForm } from './formularios';
 import { ReferidoPlan, ReferidosCuenta } from './Referidos';
 import { pasosDe, Tutorial } from './Tutorial';
@@ -526,6 +527,16 @@ function PromptAvanzado({ cuenta }: { cuenta: Cuenta }) {
   return (
     <>
       <p className="small muted">Si después guardás la información del negocio, estas instrucciones se vuelven a generar.</p>
+      <CargarArchivo
+        exigeTexto
+        aceptar=".pdf,.docx,.txt,.md,.csv,.tsv,.json,application/pdf"
+        etiqueta="Cargar un archivo en estas instrucciones"
+        ayuda="PDF, Word, TXT, CSV o Markdown. El texto se suma al prompt que estás editando."
+        onListo={(r) => {
+          if (!r.texto) return;
+          setPrompt((actual) => `${actual.trim()}\n\n${r.nombre}\n${r.texto}`.trim());
+        }}
+      />
       <textarea aria-label="Instrucciones" rows={14} value={prompt} onChange={(e) => setPrompt(e.target.value)} />
       <ErrorMsg error={guardar.error} />
       <button disabled={prompt === cuenta.negocio.prompt || guardar.isPending} onClick={() => guardar.mutate({ path: 'prompt', method: 'PUT', body: { prompt } })}>

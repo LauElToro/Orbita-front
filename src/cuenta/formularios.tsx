@@ -6,8 +6,10 @@ import { ConectarRedes } from './Redes';
 import { Icono } from '../components/Iconos';
 import { Copiar, ErrorMsg } from '../components/ui';
 import { pesos } from '../format';
-import type { Cuenta, Mensajes, Perfil, Plan, PlanId, Simulacion, Tono } from '../types';
+import type { Cuenta, ItemCatalogo, Mensajes, Perfil, Plan, PlanId, Simulacion, Tono } from '../types';
 import { useAccionCuenta } from './useCuenta';
+import { CargarArchivo } from './CargarArchivo';
+import { ToolsProducto } from './ToolProducto';
 
 interface FormProps {
   cuenta: Cuenta;
@@ -29,8 +31,112 @@ export function perfilInicial(cuenta: Cuenta): Perfil {
     derivar: p?.derivar ?? '',
     preguntas: p?.preguntas ?? [],
     turnos: p?.turnos ?? TURNOS_DEFAULT,
-    catalogo: p?.catalogo ?? [],
+    catalogo: (p?.catalogo ?? []).map((it) => ({
+      nombre: it.nombre ?? '',
+      detalle: it.detalle ?? '',
+      categoria: it.categoria ?? '',
+      imagen: it.imagen ?? '',
+      precio: it.precio ?? 0,
+      precioEfectivo: it.precioEfectivo,
+      stock: it.stock ?? null,
+      medios: it.medios?.length ? it.medios : ['efectivo', 'mercadopago'],
+    })),
+    documentos: p?.documentos ?? [],
   };
+}
+
+const PRODUCTO_NUEVO: ItemCatalogo = {
+  nombre: '',
+  detalle: '',
+  categoria: '',
+  imagen: '',
+  precio: 0,
+  stock: null,
+  medios: ['efectivo', 'mercadopago', 'tarjeta', 'transferencia'],
+};
+
+function CatalogoEditor({ perfil, set }: { perfil: Perfil; set: (patch: Partial<Perfil>) => void }) {
+  const items = perfil.catalogo ?? [];
+  const poner = (i: number, patch: Partial<ItemCatalogo>) => set({ catalogo: items.map((it, j) => (j === i ? { ...it, ...patch } : it)) });
+  return (
+    <div>
+      <h3>Catálogo</h3>
+      <p className="small muted">Si cargás la foto de un producto, el asistente la muestra en la charla.</p>
+      {items.map((it, i) => (
+        <div key={`${i}-${it.imagen}`} className="catalogo-item">
+          <div className="grid2">
+            <label>
+              Producto
+              <input value={it.nombre} onChange={(e) => poner(i, { nombre: e.target.value })} placeholder="Milanesa napolitana" />
+            </label>
+            <label>
+              Precio
+              <input type="number" min={0} value={it.precio} onChange={(e) => poner(i, { precio: Math.max(0, Math.round(Number(e.target.value) || 0)) })} />
+            </label>
+          </div>
+          <div className="grid2">
+            <label>
+              Precio en efectivo
+              <input
+                type="number"
+                min={0}
+                value={it.precioEfectivo ?? ''}
+                onChange={(e) => poner(i, { precioEfectivo: e.target.value === '' ? undefined : Math.max(0, Math.round(Number(e.target.value) || 0)) })}
+              />
+            </label>
+            <label>
+              Stock
+              <input
+                type="number"
+                min={0}
+                value={it.stock ?? ''}
+                onChange={(e) => poner(i, { stock: e.target.value === '' ? null : Math.max(0, Math.round(Number(e.target.value) || 0)) })}
+              />
+            </label>
+          </div>
+          <label>
+            Detalle
+            <input value={it.detalle} onChange={(e) => poner(i, { detalle: e.target.value })} placeholder="Con jamón, queso y salsa" />
+          </label>
+          {it.imagen && <ToolsProducto herramientas={[{ nombre: it.nombre || 'Producto', imagen: it.imagen }]} />}
+          <CargarArchivo aceptar="image/jpeg,image/png,image/webp,image/gif" etiqueta="Foto del producto" ayuda="JPG, PNG o WebP." onListo={(r) => poner(i, { imagen: r.url })} />
+          <button type="button" className="link" onClick={() => set({ catalogo: items.filter((_, j) => j !== i) })}>
+            Quitar producto
+          </button>
+        </div>
+      ))}
+      <button type="button" className="secondary" onClick={() => set({ catalogo: [...items, { ...PRODUCTO_NUEVO }] })}>
+        Agregar producto
+      </button>
+    </div>
+  );
+}
+
+function DocumentosEditor({ perfil, set }: { perfil: Perfil; set: (patch: Partial<Perfil>) => void }) {
+  const documentos = perfil.documentos ?? [];
+  return (
+    <div>
+      <h3>Archivos del prompt</h3>
+      {documentos.map((d, i) => (
+        <p key={`${d.nombre}-${i}`}>
+          {d.nombre}{' '}
+          <button type="button" className="link" onClick={() => set({ documentos: documentos.filter((_, j) => j !== i) })}>
+            Quitar
+          </button>
+        </p>
+      ))}
+      <CargarArchivo
+        exigeTexto
+        aceptar=".pdf,.docx,.txt,.md,.csv,.tsv,.json,application/pdf"
+        etiqueta="Cargar un archivo en el prompt"
+        ayuda="PDF, Word, TXT, CSV o Markdown. El texto queda en las instrucciones del asistente."
+        onListo={(r) => {
+          if (!r.texto) return;
+          set({ documentos: [...documentos, { nombre: r.nombre, url: r.url, texto: r.texto }].slice(0, 6) });
+        }}
+      />
+    </div>
+  );
 }
 
 export type SeccionPerfil = 'negocio' | 'turnos' | 'estilo';
@@ -60,6 +166,17 @@ export function PerfilForm({ cuenta, secciones, boton = 'Guardar', onGuardado }:
       body: {
         ...resto,
         preguntas: resto.preguntas.filter((q) => q.pregunta.trim() && q.respuesta.trim()),
+        catalogo: (resto.catalogo ?? [])
+          .filter((it) => it.nombre.trim())
+          .map((it) => ({
+            ...it,
+            nombre: it.nombre.trim(),
+            precio: Math.max(0, Math.round(Number(it.precio) || 0)),
+            precioEfectivo: it.precioEfectivo == null ? undefined : Math.max(0, Math.round(Number(it.precioEfectivo) || 0)),
+            stock: it.stock == null ? null : Math.max(0, Math.round(Number(it.stock) || 0)),
+            imagen: it.imagen.trim(),
+          })),
+        documentos: (resto.documentos ?? []).filter((d) => d.nombre.trim() && d.texto.trim()),
         ...(conTurnos ? { turnos } : {}),
       },
     });
@@ -90,6 +207,8 @@ export function PerfilForm({ cuenta, secciones, boton = 'Guardar', onGuardado }:
             />
             <small className="muted">Cuanto más completo, menos veces tu IA va a tener que decir "no sé".</small>
           </label>
+          <CatalogoEditor perfil={perfil} set={set} />
+          <DocumentosEditor perfil={perfil} set={set} />
           <div className="grid2">
             <label>
               Horarios de atención
@@ -466,6 +585,7 @@ interface Linea {
   acciones?: string[];
   handoff?: boolean;
   imagen?: string;
+  herramientas?: { nombre: string; imagen: string }[];
 }
 
 export function sugerenciasDe(cuenta: Cuenta): string[] {
@@ -493,7 +613,7 @@ export function ChatPrueba({ endpoint, negocio, estado, sugerencias, vacio }: Ch
         method: 'POST',
         body: { texto: mensaje, historial: previas.slice(-20).map(({ rol, texto: t }) => ({ rol, texto: t })) },
       }),
-    onSuccess: (r) => setLineas((ls) => [...ls, { rol: 'assistant', texto: r.texto, acciones: r.acciones, handoff: r.handoff, imagen: r.imagen }]),
+    onSuccess: (r) => setLineas((ls) => [...ls, { rol: 'assistant', texto: r.texto, acciones: r.acciones, handoff: r.handoff, imagen: r.imagen, herramientas: r.herramientas }]),
   });
   const enviar = (mensaje: string) => {
     if (!mensaje.trim() || probar.isPending) return;
@@ -522,7 +642,7 @@ export function ChatPrueba({ endpoint, negocio, estado, sugerencias, vacio }: Ch
         {lineas.length === 0 && <p className="chat-vacio">{vacio}</p>}
         {lineas.map((l, i) => (
           <div key={i} className={`burbuja ${l.rol === 'user' ? 'out' : 'in'}`}>
-            {l.imagen && <img src={l.imagen} alt="" />}
+            <ToolsProducto herramientas={l.herramientas} imagen={l.imagen} />
             {l.texto}
             {l.acciones?.map((a) => (
               <span key={a} className="sim-accion">

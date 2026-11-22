@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api';
 import { ErrorMsg, PageHead, Section } from '../components/ui';
 import { coincideCharla, cuandoLista, gruposPorDia, horaDe, tieneTelefono } from '../format';
+import { ToolsProducto } from './ToolProducto';
 import type { Cuenta } from '../types';
 import { useAccionCuenta } from './useCuenta';
 import { useCuentaActual, ZonaExplorar } from './Panel';
@@ -26,6 +27,7 @@ interface MensajeCharla {
   rol: 'user' | 'assistant';
   texto: string;
   at: string;
+  herramientas?: { nombre: string; imagen: string }[];
 }
 
 interface Charla {
@@ -243,6 +245,7 @@ function Chat({ id, onVolver }: { id: string; onVolver: () => void }) {
             {grupo.dia && <p className="chat-dia">{grupo.dia}</p>}
             {grupo.items.map((m, i) => (
               <div key={`${m.at}-${i}`} className={`burbuja ${m.rol === 'user' ? 'in' : 'out'}`}>
+                <ToolsProducto herramientas={m.herramientas} />
                 {m.texto}
                 {m.at && horaDe(m.at) && <small>{horaDe(m.at)}</small>}
               </div>
