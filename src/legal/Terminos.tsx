@@ -109,14 +109,13 @@ export function Terminos() {
         <h2>7. Planes, topes y pagos</h2>
         <ul>
           <li>
-            El Servicio se contrata por abono mensual que se paga por adelantado. Cada plan incluye una cantidad máxima de respuestas por día,
-            semana y mes; al alcanzarse, el asistente deja de responder con IA y envía un mensaje fijo hasta que el período se renueva o se
-            cambia de plan.
+            El Servicio se contrata por abono mensual que se paga por adelantado, únicamente con débito de Mercado Pago. Cada plan incluye una
+            cantidad de respuestas por día, semana y mes. Al superarse ese cupo, la IA sigue contestando: cada respuesta extra se cobra aparte,
+            a un precio mayor que el del abono, para que convenga pasar a un plan con más cupo. Ese cargo es independiente del abono.
           </li>
           <li>
-            Los pagos se realizan por débito automático de Mercado Pago. Orbita no almacena datos de tarjetas; el procesamiento lo realiza
-            Mercado Pago bajo sus propios términos. Podés crear la cuenta y recorrer el panel antes de pagar; el asistente se habilita cuando
-            el pago se acredita.
+            Orbita no almacena datos de tarjetas; el procesamiento lo realiza Mercado Pago bajo sus propios términos. Podés crear la cuenta y
+            recorrer el panel antes de pagar; el asistente se habilita cuando el pago se acredita.
           </li>
           <li>
             Si el pago no se acredita, el Servicio se pausa automáticamente una vez vencido el período de gracia informado en el panel, sin
@@ -142,9 +141,10 @@ export function Terminos() {
 
         <h2>9. Baja</h2>
         <p>
-          El Cliente puede dar de baja el Servicio en cualquier momento desde su panel o escribiendo a {EMPRESA.soporte}. La baja tiene efecto
-          al finalizar el período ya abonado y cancela los débitos futuros. Una vez dada de baja la cuenta, Orbita puede eliminar el Contenido
-          del Cliente y las conversaciones luego de 90 días, salvo los datos que deba conservar por obligación legal.
+          El Cliente puede dar de baja el Servicio en cualquier momento desde su panel o escribiendo a {EMPRESA.soporte}. La baja corta los
+          débitos futuros al instante y no genera reembolso del período ya abonado: el Servicio sigue disponible hasta el vencimiento y después
+          no se vuelve a cobrar. Una vez dada de baja la cuenta, Orbita puede eliminar el Contenido del Cliente y las conversaciones luego de 90
+          días, salvo los datos que deba conservar por obligación legal.
         </p>
 
         <h2>10. Plan Personalizado</h2>

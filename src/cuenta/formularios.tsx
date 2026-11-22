@@ -1,11 +1,12 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { api } from '../api';
-import { CanalesEditor, canalesParaEnviar, canalVacio } from '../components/CanalesEditor';
+import { WhatsAppConectar } from './WhatsApp';
+import { ConectarRedes } from './Redes';
 import { Icono } from '../components/Iconos';
 import { Copiar, ErrorMsg } from '../components/ui';
 import { pesos } from '../format';
-import type { Canal, Cuenta, Mensajes, Perfil, Plan, PlanId, Simulacion, Tono } from '../types';
+import type { Cuenta, Mensajes, Perfil, Plan, PlanId, Simulacion, Tono } from '../types';
 import { useAccionCuenta } from './useCuenta';
 
 interface FormProps {
@@ -28,15 +29,16 @@ export function perfilInicial(cuenta: Cuenta): Perfil {
     derivar: p?.derivar ?? '',
     preguntas: p?.preguntas ?? [],
     turnos: p?.turnos ?? TURNOS_DEFAULT,
+    catalogo: p?.catalogo ?? [],
   };
 }
 
 export type SeccionPerfil = 'negocio' | 'turnos' | 'estilo';
 
 const TONOS: { value: Tono; label: string; ejemplo: string }[] = [
-  { value: 'cercano', label: 'Cercano', ejemplo: '¡Hola! Sí, tenemos. ¿Querés que te reserve uno?' },
-  { value: 'formal', label: 'Formal', ejemplo: 'Buenas tardes. Sí, contamos con disponibilidad. ¿Desea reservar?' },
-  { value: 'divertido', label: 'Divertido', ejemplo: '¡Holaa! 🙌 Obvio que sí, ¿te guardo uno?' },
+  { value: 'cercano', label: 'Cercano', ejemplo: 'Hola. Sí, lo tenemos. ¿Desea que se lo reserve?' },
+  { value: 'formal', label: 'Formal', ejemplo: 'Buenas tardes. Sí, hay disponibilidad. ¿Desea reservarlo?' },
+  { value: 'divertido', label: 'Divertido', ejemplo: 'Hola. Sí, lo tenemos. ¿Lo reservamos? 🙌' },
 ];
 
 export function PerfilForm({ cuenta, secciones, boton = 'Guardar', onGuardado }: FormProps & { secciones: SeccionPerfil[] }) {
@@ -166,12 +168,15 @@ export function PerfilForm({ cuenta, secciones, boton = 'Guardar', onGuardado }:
             ))}
           </fieldset>
           <label>
-            ¿Cuándo tiene que pasarte la conversación?
-            <input
+            Cuándo derivar automáticamente
+            <textarea
+              rows={3}
+              maxLength={1000}
               value={perfil.derivar}
               onChange={(e) => set({ derivar: e.target.value })}
-              placeholder="Reclamos, pedidos grandes para eventos o si preguntan por facturación"
+              placeholder={'Reclamos\nPedidos para eventos\nSi preguntan por facturación'}
             />
+            <small className="muted">La IA pasa la charla a una persona cuando entiende que pasó alguno de estos casos.</small>
           </label>
           <h3>Preguntas frecuentes</h3>
           <p className="small muted">Las que más te hacen. Tu IA las va a responder tal cual.</p>
@@ -210,7 +215,7 @@ export function PerfilForm({ cuenta, secciones, boton = 'Guardar', onGuardado }:
 
 const TEXTOS: Record<keyof Mensajes, { label: string; ayuda: string }> = {
   espera: { label: 'Mensaje de espera', ayuda: 'Se envía si la IA tarda más de lo normal en responder.' },
-  tope: { label: 'Mensaje al llegar al tope', ayuda: 'Se envía cuando se terminan las respuestas del período.' },
+  tope: { label: 'Mensaje al llegar al tope', ayuda: 'Quedó de respaldo. Al pasar el cupo la IA sigue contestando y cada respuesta extra se cobra aparte.' },
   handoff: { label: 'Mensaje al pasar con una persona', ayuda: 'Se envía cuando la IA te deriva la conversación.' },
   recordatorio: { label: 'Recordatorio de turno', ayuda: 'Usá {{hora}} donde quieras que aparezca la hora del turno.' },
 };
@@ -244,24 +249,24 @@ export function GuiaCanales() {
   return (
     <div className="guia-canales">
       <p className="small muted">
-        Tu IA responde directo desde tu cuenta, sin apps intermedias. Para cada canal necesitás dos datos: el ID de la cuenta que recibe los
-        mensajes y un token de acceso que la autoriza a contestar. Los webhooks ya están configurados del lado de Orbita.
+        Tu IA responde directo desde tu cuenta, sin apps intermedias. Cada botón abre la autorización de esa red y Orbita guarda el acceso.
+        Los webhooks ya están configurados de este lado.
       </p>
       <details>
         <summary>WhatsApp</summary>
         <ol>
-          <li>
-            Tu número tiene que estar en la <strong>API de WhatsApp Business (Cloud API)</strong>, dentro de una cuenta de Meta Business verificada.
-          </li>
-          <li>
-            El ID es el <strong>Identificador del número de teléfono</strong>: aparece en Meta for Developers → WhatsApp → Configuración de la
-            API, al lado de tu número. No es el número en sí.
-          </li>
-          <li>
-            El token es uno <strong>permanente</strong> de un usuario del sistema (Configuración del negocio → Usuarios del sistema → Generar
-            token) con los permisos <code>whatsapp_business_messaging</code> y <code>whatsapp_business_management</code>.
-          </li>
+          <li>Apretá <strong>Conectar WhatsApp</strong>. Se abre la ventana de Meta: elegís el negocio y el número.</li>
+          <li>Orbita verifica el número, lo enlaza con Meta y deja el webhook listo. No hace falta copiar un token.</li>
+          <li>En esta misma pantalla ves si el número está pendiente, en revisión o verificado.</li>
           <li>Meta cobra los mensajes que inicia el negocio fuera de las 24 horas desde el último mensaje del cliente.</li>
+        </ol>
+      </details>
+      <details>
+        <summary>Facebook</summary>
+        <ol>
+          <li>Apretá <strong>Conectar Facebook</strong> e iniciá sesión con la cuenta que administra la página.</li>
+          <li>Orbita toma el Instagram profesional vinculado a esa página y deja el webhook listo.</li>
+          <li>Si la página no tiene un Instagram profesional, usá Conectar Instagram.</li>
         </ol>
       </details>
       <details>
@@ -272,10 +277,7 @@ export function GuiaCanales() {
             En la app de Instagram activá <strong>Configuración → Mensajes y respuestas → Herramientas conectadas → Permitir acceso a los
             mensajes</strong>.
           </li>
-          <li>
-            El ID y el token salen de autorizar la app de Orbita con <strong>Iniciar sesión con Instagram</strong>, con el permiso{' '}
-            <code>instagram_business_manage_messages</code>.
-          </li>
+          <li>Apretá <strong>Conectar Instagram</strong>. Se abre el inicio de sesión de Instagram y la cuenta queda enlazada.</li>
           <li>Instagram solo deja responder dentro de las 24 horas desde el último mensaje del cliente.</li>
         </ol>
       </details>
@@ -283,10 +285,8 @@ export function GuiaCanales() {
         <summary>TikTok</summary>
         <ol>
           <li>La cuenta tiene que ser de empresa (TikTok Business) y tener los mensajes directos habilitados.</li>
-          <li>
-            El ID (<code>business_id</code>) y el token salen de autorizar la app de Orbita en TikTok for Business con el permiso de mensajes.
-          </li>
-          <li>El token de TikTok vence rápido: si tu IA deja de contestar ahí, pegá uno nuevo.</li>
+          <li>Apretá <strong>Conectar TikTok</strong> y autorizá los mensajes. No hace falta copiar un ID.</li>
+          <li>El acceso de TikTok vence: si tu IA deja de contestar ahí, volvé a conectar.</li>
           <li>TikTok permite hasta 10 respuestas por conversación cada 48 horas desde el último mensaje del cliente.</li>
         </ol>
       </details>
@@ -451,28 +451,12 @@ export function GuiaWeb() {
   );
 }
 
-export function CanalesForm({ cuenta, boton = 'Guardar canales', onGuardado }: FormProps) {
-  const [canales, setCanales] = useState<Canal[]>(cuenta.canales.length ? cuenta.canales : [canalVacio()]);
-  const guardar = useAccionCuenta((c) => {
-    setCanales(c.canales.length ? c.canales : [canalVacio()]);
-    onGuardado?.(c);
-  });
-  const enviar = (e: FormEvent) => {
-    e.preventDefault();
-    guardar.mutate({ path: 'canales', method: 'PUT', body: { canales: canalesParaEnviar(canales) } });
-  };
+export function CanalesForm({ cuenta }: FormProps) {
   return (
-    <form onSubmit={enviar}>
-      <p className="small muted">
-        Tu plan {cuenta.plan.nombre} admite {cuenta.plan.maxCanales} {cuenta.plan.maxCanales === 1 ? 'canal' : 'canales'}. Los tokens se guardan
-        cifrados y nunca se muestran completos.
-      </p>
-      <CanalesEditor value={canales} max={cuenta.plan.maxCanales} onChange={setCanales} />
-      <ErrorMsg error={guardar.error} />
-      <button type="submit" disabled={guardar.isPending}>
-        {boton}
-      </button>
-    </form>
+    <div>
+      <WhatsAppConectar cuenta={cuenta} />
+      <ConectarRedes cuenta={cuenta} />
+    </div>
   );
 }
 
@@ -481,6 +465,7 @@ interface Linea {
   texto: string;
   acciones?: string[];
   handoff?: boolean;
+  imagen?: string;
 }
 
 export function sugerenciasDe(cuenta: Cuenta): string[] {
@@ -508,7 +493,7 @@ export function ChatPrueba({ endpoint, negocio, estado, sugerencias, vacio }: Ch
         method: 'POST',
         body: { texto: mensaje, historial: previas.slice(-20).map(({ rol, texto: t }) => ({ rol, texto: t })) },
       }),
-    onSuccess: (r) => setLineas((ls) => [...ls, { rol: 'assistant', texto: r.texto, acciones: r.acciones, handoff: r.handoff }]),
+    onSuccess: (r) => setLineas((ls) => [...ls, { rol: 'assistant', texto: r.texto, acciones: r.acciones, handoff: r.handoff, imagen: r.imagen }]),
   });
   const enviar = (mensaje: string) => {
     if (!mensaje.trim() || probar.isPending) return;
@@ -537,13 +522,14 @@ export function ChatPrueba({ endpoint, negocio, estado, sugerencias, vacio }: Ch
         {lineas.length === 0 && <p className="chat-vacio">{vacio}</p>}
         {lineas.map((l, i) => (
           <div key={i} className={`burbuja ${l.rol === 'user' ? 'out' : 'in'}`}>
+            {l.imagen && <img src={l.imagen} alt="" />}
             {l.texto}
             {l.acciones?.map((a) => (
               <span key={a} className="sim-accion">
                 {a}
               </span>
             ))}
-            {l.handoff && <span className="sim-accion">Te avisaría para que sigas vos</span>}
+            {l.handoff && <span className="sim-accion">Le avisamos para que continúe la charla</span>}
           </div>
         ))}
         {probar.isPending && (
@@ -645,7 +631,7 @@ export function PagoBloque({ cuenta }: { cuenta: Cuenta }) {
         Importe mensual: <strong>{pesos(sub.importe)}</strong>
         {cuenta.planPendiente && ` (plan ${cuenta.planPendiente.nombre})`}
       </p>
-      <p className="small muted">Te llevamos a Mercado Pago para aprobar el débito automático mensual. Podés cancelarlo cuando quieras.</p>
+      <p className="small muted">Te llevamos a Mercado Pago para aprobar el débito automático mensual. La baja se hace desde el panel: corta el débito y no devuelve el período ya pago.</p>
       <ErrorMsg error={mp.error} />
       <button onClick={() => (sub.mpInitPoint ? location.assign(sub.mpInitPoint) : mp.mutate())} disabled={mp.isPending}>
         {mp.isPending ? 'Abriendo Mercado Pago...' : 'Pagar con Mercado Pago'}

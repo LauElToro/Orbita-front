@@ -101,7 +101,7 @@ button.link { background: none; border: none; color: var(--primary); padding: 0.
 .button-lg, button.button-lg { padding: 0.75rem 1.4rem; font-size: 1.05rem; border-radius: 10px; }
 .button-ghost { background: transparent; border-color: rgba(255, 255, 255, 0.4); color: #fff; }
 .button-ghost-dark { background: transparent; color: var(--primary); }
-button:not(.secondary):not(.link):not(.chip):not(.icon-btn):not(.ghost-btn):not(.funcion):not([role='radio']):not(.pres button):not(:disabled):hover, .button:not(.secondary):hover { background: var(--primary-dark); border-color: var(--primary-dark); }
+button:not(.secondary):not(.link):not(.chip):not(.icon-btn):not(.ghost-btn):not(.funcion):not(.inbox-item):not([role='radio']):not(.pres button):not(:disabled):hover, .button:not(.secondary):hover { background: var(--primary-dark); border-color: var(--primary-dark); }
 .button-ghost:hover { background: rgba(255, 255, 255, 0.1) !important; border-color: #fff !important; }
 .button-ghost-dark:hover { color: #fff; }
 .centrado { text-align: center; }
@@ -132,7 +132,8 @@ button:not(.secondary):not(.link):not(.chip):not(.icon-btn):not(.ghost-btn):not(
 .demo-head span:not(.demo-avatar) { color: var(--ok); font-size: 0.75rem; }
 .demo-avatar { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--primary); color: #fff; font-weight: 700; font-size: 0.85rem; }
 .demo-body { padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem; }
-.burbuja { margin: 0; padding: 0.55rem 0.8rem; border-radius: 14px; max-width: 85%; font-size: 0.92rem; line-height: 1.4; white-space: pre-wrap; }
+.burbuja { margin: 0; padding: 0.55rem 0.8rem; border-radius: 14px; max-width: min(85%, 36rem); font-size: 0.92rem; line-height: 1.4; white-space: pre-wrap; overflow-wrap: anywhere; }
+.burbuja img { display: block; max-width: 220px; border-radius: 10px; margin-bottom: 0.35rem; }
 .burbuja.in { background: #fff; align-self: flex-start; border-bottom-left-radius: 4px; }
 .burbuja.out { background: #dcd7ff; align-self: flex-end; border-bottom-right-radius: 4px; }
 
@@ -589,7 +590,7 @@ input[type='color'] { width: 4rem; height: 2.3rem; padding: 0.15rem; cursor: poi
 .chat-head div { display: flex; flex-direction: column; flex: 1; min-width: 0; }
 .chat-head small { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--muted); font-size: 0.78rem; }
 .chat-head .punto { width: 7px; height: 7px; }
-.chat-cuerpo { min-height: 300px; max-height: 460px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.55rem; padding: 0.9rem; border-radius: 14px; background: radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--muted) 14%, transparent) 1px, transparent 0) 0 0 / 18px 18px, var(--surface); border: 1px solid var(--border); }
+.chat-cuerpo { min-height: 300px; max-height: min(62vh, 560px); overflow-y: auto; display: flex; flex-direction: column; gap: 0.55rem; padding: 0.9rem; border-radius: 14px; background: radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--muted) 14%, transparent) 1px, transparent 0) 0 0 / 18px 18px, var(--surface); border: 1px solid var(--border); }
 .chat-vacio { margin: auto; text-align: center; max-width: 22rem; color: var(--muted); font-size: 0.88rem; line-height: 1.5; }
 .app .burbuja { font-size: 0.9rem; border-radius: 16px; }
 .app .burbuja.in { background: var(--card); color: var(--text); border: 1px solid var(--border); }
@@ -660,3 +661,44 @@ input[type='color'] { width: 4rem; height: 2.3rem; padding: 0.15rem; cursor: poi
 .app .kpi-bad::before { background: var(--bad); }
 .app .kpi-valor { font-size: 1.6rem; font-weight: 800; }
 .app .barras rect { fill: var(--primary); }
+.aviso-ventana { border-left: 3px solid var(--warn); background: var(--warn-soft); border-radius: 12px; padding: 0.9rem 1rem; margin: 0.75rem 0; }
+.aviso-ventana .chat-form { margin-top: 0.6rem; }
+.inbox { display: grid; grid-template-columns: minmax(240px, 340px) minmax(0, 1fr); gap: 1rem; align-items: start; }
+.inbox-lista { display: grid; gap: 0.55rem; align-content: start; }
+.inbox-herramientas { display: grid; gap: 0.5rem; }
+.inbox-herramientas .segmento { flex-wrap: wrap; }
+.inbox-tope { display: flex; justify-content: space-between; gap: 0.5rem; width: 100%; align-items: baseline; }
+.inbox-tope small { flex: none; }
+.app button.inbox-item { display: grid; justify-items: start; gap: 0.3rem; width: 100%; text-align: left; font-weight: 400; padding: 0.85rem 1rem; border-radius: 12px; border: 1px solid var(--border); border-left: 3px solid transparent; background: var(--card); color: var(--text); }
+.app button.inbox-item.aviso { border-left-color: var(--warn); background: var(--warn-soft); }
+.app button.inbox-item.on, .app button.inbox-item:hover { border-color: var(--primary); color: var(--text); }
+.app button.chip.on { background: var(--primary-soft); color: var(--text); border-color: var(--primary); }
+.inbox-nombre { display: inline-block; max-width: 9.5rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+.inbox-numero { display: block; font-variant-numeric: tabular-nums; }
+.inbox-ultimo { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.derivar { display: grid; gap: 0.35rem; margin-bottom: 1rem; }
+.derivar-nota { margin: 0 0 1rem; }
+.chat-estado { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+.chat-estado p { margin: 0; }
+.chat-estado button { flex: none; white-space: nowrap; }
+.chat-dia-grupo { display: flex; flex-direction: column; gap: 0.55rem; width: 100%; }
+.chat-dia { align-self: center; margin: 0.15rem 0; padding: 0.15rem 0.65rem; border-radius: 999px; background: var(--card); color: var(--muted); border: 1px solid var(--border); font-size: 0.72rem; font-weight: 700; }
+.inbox-chat { min-height: 420px; }
+.aviso-chat { margin: 0; padding: 0.45rem 0.7rem; border-radius: 8px; background: var(--warn-soft); color: var(--text); }
+.chat-id, .reporte-fallo { display: grid; gap: 0.35rem; justify-items: start; }
+.chat-id p, .reporte-fallo p { margin: 0; font-size: 0.78rem; color: var(--muted); }
+.chat-id code, .reporte-fallo code, .chat-enlace { overflow-wrap: anywhere; }
+.reporte-fallo { padding: 0.7rem 0.8rem; border-radius: 10px; background: var(--bad-soft); border: 1px solid color-mix(in srgb, var(--bad) 35%, transparent); }
+.reporte-fallo p:first-child { color: var(--bad); font-weight: 700; }
+.app button.inbox-volver { display: none; }
+.burbuja small { display: block; margin-top: 0.25rem; font-size: 0.7rem; opacity: 0.75; }
+@media (max-width: 800px) {
+  .inbox { grid-template-columns: 1fr; }
+  .inbox-abierta .inbox-lista { display: none; }
+  .inbox:not(.inbox-abierta) .inbox-chat { display: none; }
+  .app button.inbox-volver { display: inline-flex; }
+}
+.whatsapp-conectar { display: grid; gap: 0.6rem; margin-bottom: 1rem; }
+.redes-conectar { display: grid; gap: 0.75rem; }
+.redes-botones { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.redes-estado { display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; }

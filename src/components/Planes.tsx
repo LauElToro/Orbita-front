@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { pesos } from '../format';
-import type { MedioPago, Plan } from '../types';
+import type { Plan } from '../types';
 
 export function beneficiosDe(plan: Plan): string[] {
   const m = plan.modulos;
@@ -9,7 +9,8 @@ export function beneficiosDe(plan: Plan): string[] {
     `${plan.maxCanales} ${plan.maxCanales === 1 ? 'canal' : 'canales'} (WhatsApp, Instagram o TikTok)`,
     'Responde preguntas frecuentes con la info de tu negocio',
     m.includes('handoff') && 'Te pasa la conversación cuando hace falta una persona',
-    m.includes('turnos') && 'Agenda y cancela turnos solo',
+    m.includes('turnos') && 'Agenda, mueve y cancela turnos, y los copia a tu calendario',
+    plan.precioMensajeExtra ? `Respuesta extra: ${pesos(plan.precioMensajeExtra)}, sin cambiar de plan` : false,
     m.includes('recordatorios') && 'Recordatorios automáticos el día anterior',
     plan.modeloCapaz && 'Modelo de IA más capaz para charlas complejas',
   ].filter((b): b is string => Boolean(b));
@@ -31,18 +32,16 @@ export function Oferta({ precio, className = 'oferta' }: { precio: number; class
   );
 }
 
-export function precioDe(plan: Plan, medio: MedioPago): number {
-  return medio === 'mercadopago' ? plan.precioMercadoPago : plan.precioTransferencia;
+export function precioDe(plan: Plan): number {
+  return plan.precioMercadoPago;
 }
 
 export function PlanCard({
   plan,
-  medio,
   seleccionado,
   accion,
 }: {
   plan: Plan;
-  medio: MedioPago;
   seleccionado?: boolean;
   accion?: ReactNode;
 }) {
@@ -50,9 +49,9 @@ export function PlanCard({
     <div className={`plan ${plan.id === DESTACADO ? 'plan-destacado' : ''} ${seleccionado ? 'plan-sel' : ''}`}>
       {plan.id === DESTACADO && <span className="plan-tag">El más elegido</span>}
       <h3>{plan.nombre}</h3>
-      <Oferta precio={precioDe(plan, medio)} />
+      <Oferta precio={precioDe(plan)} />
       <p className="plan-precio">
-        {pesos(precioDe(plan, medio))}
+        {pesos(precioDe(plan))}
         <span>/mes</span>
       </p>
       <p className="small muted">{OFERTA_LEYENDA} · Débito automático con Mercado Pago</p>

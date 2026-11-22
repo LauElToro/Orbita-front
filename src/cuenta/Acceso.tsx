@@ -418,6 +418,72 @@ export function Olvide() {
   );
 }
 
+export function CalendarioVuelta() {
+  const [params] = useSearchParams();
+  const navigate = useNavigate();
+  const [error, setError] = useState('');
+  const hecho = useRef(false);
+  useEffect(() => {
+    if (hecho.current) return;
+    hecho.current = true;
+    const code = params.get('code');
+    const state = params.get('state');
+    if (!code || !state || params.get('error')) {
+      setError('Google no completó la conexión del calendario.');
+      return;
+    }
+    api('/cuenta/calendario/callback', { method: 'POST', body: { code, state } })
+      .then(() => navigate('/cuenta/agenda', { replace: true }))
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'No pudimos conectar el calendario'));
+  }, [navigate, params]);
+  return (
+    <Marco>
+      <div className="auth-form">
+        <h1>{error ? 'No se conectó el calendario' : 'Conectando el calendario...'}</h1>
+        {error ? <p className="error">{error}</p> : <p className="auth-sub">Estamos guardando el acceso.</p>}
+        {error && (
+          <Link to="/cuenta/agenda" className="button auth-submit">
+            Volver a la agenda
+          </Link>
+        )}
+      </div>
+    </Marco>
+  );
+}
+
+export function RedesVuelta() {
+  const [params] = useSearchParams();
+  const navigate = useNavigate();
+  const [error, setError] = useState('');
+  const hecho = useRef(false);
+  useEffect(() => {
+    if (hecho.current) return;
+    hecho.current = true;
+    const code = params.get('code')?.replace(/#_$/, '') ?? '';
+    const state = params.get('state');
+    if (!code || !state || params.get('error')) {
+      setError('La red no completó la conexión.');
+      return;
+    }
+    api('/cuenta/redes/callback', { method: 'POST', body: { code, state } })
+      .then(() => navigate('/cuenta', { replace: true }))
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'No pudimos conectar la cuenta'));
+  }, [navigate, params]);
+  return (
+    <Marco>
+      <div className="auth-form">
+        <h1>{error ? 'No se conectó la cuenta' : 'Conectando la cuenta...'}</h1>
+        {error ? <p className="error">{error}</p> : <p className="auth-sub">Estamos guardando el acceso.</p>}
+        {error && (
+          <Link to="/cuenta/conexion" className="button auth-submit">
+            Volver a la conexión
+          </Link>
+        )}
+      </div>
+    </Marco>
+  );
+}
+
 export function GoogleVuelta() {
   const [params] = useSearchParams();
   const navigate = useNavigate();

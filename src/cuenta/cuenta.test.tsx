@@ -2,6 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { sesionCliente } from '../api';
+import { gruposPorDia } from '../format';
 import { cuenta, PLANES } from '../test/fixtures';
 import { mockApi, renderApp } from '../test/utils';
 import type { Cuenta } from '../types';
@@ -26,7 +27,6 @@ describe('registro y acceso del cliente', () => {
       },
       'GET /cuenta/me': cuenta({
         suscripcion: { medio: 'mercadopago', estadoPago: 'pendiente', vencimiento: '2026-11-14T15:00:00.000Z', importe: 115000, mpInitPoint: null },
-        transferencia: null,
         onboarding: { paso: 0, completado: null, requisitos: { pago: false, canal: false, prompt: false } },
       }),
     });
@@ -235,7 +235,6 @@ describe('registro y acceso del cliente', () => {
     mockApi({
       'GET /cuenta/me': cuenta({
         suscripcion: { medio: 'mercadopago', estadoPago: 'pendiente', vencimiento: '2026-11-14T15:00:00.000Z', importe: 84000, mpInitPoint: null },
-        transferencia: null,
         onboarding: { paso: 0, completado: null, requisitos: { pago: false, canal: false, prompt: false } },
       }),
       'POST /cuenta/suscripcion': { initPoint: 'https://mp.test/pre' },
@@ -327,7 +326,7 @@ describe('tutorial por plan', () => {
     expect(screen.getByRole('heading', { name: 'Estilo y preguntas' })).toBeInTheDocument();
   });
 
-  it('conecta un canal con su token, muestra la guía y carga los textos', async () => {
+  it('muestra conectar en un toque, salta las redes y carga los textos', async () => {
     conSesion();
     const base = cuenta({ onboarding: { paso: 4, completado: null, requisitos: { pago: true, canal: false, prompt: true } } });
     const conectada = {
@@ -352,16 +351,15 @@ describe('tutorial por plan', () => {
     renderApp('/cuenta');
     expect(await screen.findByRole('heading', { name: 'Conectar tus canales' })).toBeInTheDocument();
     expect(screen.queryByText(/manychat/i)).not.toBeInTheDocument();
-    expect(screen.getByText('Sin token')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Conectar Facebook' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Conectar Instagram' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Conectar TikTok' })).toBeInTheDocument();
+    expect(screen.queryByText('ID de la cuenta de Instagram')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Token canal 1')).not.toBeInTheDocument();
     expect(screen.getByText('WhatsApp', { selector: 'summary' })).toBeInTheDocument();
+    expect(screen.getByText('Facebook', { selector: 'summary' })).toBeInTheDocument();
 
-    await userEvent.selectOptions(screen.getByLabelText('Tipo canal 1'), 'instagram');
-    expect(screen.getByText('ID de la cuenta de Instagram')).toBeInTheDocument();
-    await userEvent.type(screen.getByLabelText('endpointId canal 1'), '1784140');
-    await userEvent.type(screen.getByLabelText('Token canal 1'), 'token-instagram-largo');
-    await userEvent.type(screen.getByLabelText('Etiqueta canal 1'), 'Instagram');
-    expect(screen.getByRole('button', { name: /Agregar canal \(1\/2\)/ })).toBeEnabled();
-    await userEvent.click(screen.getByRole('button', { name: 'Guardar y seguir' }));
+    await userEvent.click(screen.getByRole('button', { name: 'No uso WhatsApp, Instagram ni TikTok: seguir con la web' }));
     expect(await screen.findByRole('heading', { name: 'Integración web' })).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Ahora no, seguir' }));
     expect(await screen.findByLabelText(/^Mensaje al pasar con una persona/)).toBeInTheDocument();
@@ -369,7 +367,7 @@ describe('tutorial por plan', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Guardar y seguir' }));
     await screen.findByRole('heading', { name: 'Probá tu IA' });
 
-    expect(canales).toEqual({ canales: [{ tipo: 'instagram', endpointId: '1784140', etiqueta: 'Instagram', token: 'token-instagram-largo' }] });
+    expect(canales).toBeNull();
     expect(Object.keys(textos as object)).toEqual(['espera', 'tope', 'handoff']);
   });
 
@@ -406,24 +404,36 @@ describe('tutorial por plan', () => {
     expect(body).toMatchObject({ activa: true, origenes: ['https://www.mitienda.com', 'mitienda.mitiendanube.com'], color: '#5b4cf0' });
   });
 
-  it('editar un canal conectado sin pegar token no lo manda', async () => {
+  it('un canal conectado se vuelve a enlazar sin pegar el token', async () => {
     conSesion();
-    const c = lista(cuenta({ canales: [{ tipo: 'whatsapp', endpointId: 'PN-1', etiqueta: 'WhatsApp', conectado: true, tokenMask: '****1234' }] }));
-    let canales: unknown = null;
-    mockApi({
-      'GET /cuenta/me': c,
-      'PUT /cuenta/canales': (init: RequestInit) => {
-        canales = JSON.parse(String(init.body));
-        return { body: c };
-      },
-    });
+    const c = lista(cuenta({ canales: [{ tipo: 'instagram', endpointId: 'PN-1', etiqueta: 'Instagram del local', conectado: true, tokenMask: '****1234' }] }));
+    mockApi({ 'GET /cuenta/me': c });
     renderApp('/cuenta/conexion');
     expect(await screen.findByText('Conectado')).toBeInTheDocument();
-    expect(screen.getByLabelText('Token canal 1')).toHaveAttribute('placeholder', expect.stringContaining('****1234'));
-    await userEvent.clear(screen.getByLabelText('Etiqueta canal 1'));
-    await userEvent.type(screen.getByLabelText('Etiqueta canal 1'), 'WhatsApp del local');
-    await userEvent.click(screen.getByRole('button', { name: 'Guardar canales' }));
-    await waitFor(() => expect(canales).toEqual({ canales: [{ tipo: 'whatsapp', endpointId: 'PN-1', etiqueta: 'WhatsApp del local' }] }));
+    expect(screen.getByText('Instagram del local')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Volver a conectar Instagram' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Volver a conectar Facebook' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Conectar TikTok' })).toBeInTheDocument();
+    expect(screen.queryByLabelText('Token canal 1')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Guardar canales' })).not.toBeInTheDocument();
+  });
+
+  it('abre la autorización al conectar Instagram', async () => {
+    conSesion();
+    const assign = vi.fn();
+    vi.stubGlobal('location', { ...window.location, assign, pathname: '/cuenta/conexion' });
+    mockApi({
+      'GET /cuenta/me': cuenta({
+        redes: { facebook: { listo: true }, instagram: { listo: true }, tiktok: { listo: false } },
+      }),
+      'POST /cuenta/redes/instagram/iniciar': { url: 'https://www.instagram.com/oauth/authorize?state=abc' },
+    });
+    renderApp('/cuenta/conexion');
+    expect(await screen.findByRole('button', { name: 'Conectar Instagram' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Conectar TikTok' })).toBeDisabled();
+    await userEvent.click(screen.getByRole('button', { name: 'Conectar Instagram' }));
+    await waitFor(() => expect(assign).toHaveBeenCalledWith('https://www.instagram.com/oauth/authorize?state=abc'));
+    vi.unstubAllGlobals();
   });
 
   it('el simulador muestra respuestas y acciones sin efectos', async () => {
@@ -599,7 +609,7 @@ describe('panel del cliente', () => {
     mockApi({
       'GET /cuenta/me': c,
       'GET /publico/planes': PUBLICOS,
-      'GET /cuenta/pagos': [{ id: 'p1', medio: 'transferencia', importe: 80000, periodo: '2026-11', createdAt: '2026-11-14T15:00:00.000Z' }],
+      'GET /cuenta/pagos': [{ id: 'p1', medio: 'mercadopago', importe: 80000, periodo: '2026-11', createdAt: '2026-11-14T15:00:00.000Z' }],
       'PATCH /cuenta/plan': (init: RequestInit) => {
         body = JSON.parse(String(init.body));
         return { body: c };
@@ -726,7 +736,8 @@ describe('panel del cliente', () => {
       'GET /cuenta/turnos': [],
     });
     renderApp('/cuenta/conexion');
-    expect(await screen.findByLabelText('endpointId canal 1')).toHaveValue('ig-luna');
+    expect(await screen.findByRole('button', { name: 'Conectar Instagram' })).toBeInTheDocument();
+    expect(screen.queryByLabelText('endpointId canal 1')).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('link', { name: 'Probar' }));
     expect(await screen.findByLabelText('Mensaje de prueba')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('link', { name: 'Agenda' }));
@@ -739,5 +750,171 @@ describe('panel del cliente', () => {
     expect(password).toEqual({ actual: 'vieja', nueva: 'nueva-clave-2' });
     await userEvent.click(screen.getByRole('button', { name: 'Salir' }));
     expect(sesionCliente.get()).toBeNull();
+  });
+
+  it('muestra el estado de WhatsApp sin pedir el token del número', async () => {
+    conSesion();
+    mockApi({
+      'GET /cuenta/me': lista(
+        cuenta({
+          whatsapp: { listo: true, appId: 'app', configId: 'cfg', version: 'v26.0' },
+          canales: [
+            {
+              tipo: 'whatsapp',
+              endpointId: 'pn-1',
+              etiqueta: 'WhatsApp',
+              conectado: true,
+              verificacion: 'verificado',
+              verificacionDetalle: 'Número verificado +54 9 11 5555-5555',
+              displayPhone: '+54 9 11 5555-5555',
+            },
+          ],
+        }),
+      ),
+    });
+    renderApp('/cuenta/conexion');
+    expect(await screen.findByText('Verificado')).toBeInTheDocument();
+    expect(screen.getByText('+54 9 11 5555-5555')).toBeInTheDocument();
+    expect(screen.queryByText('Identificador del número de teléfono')).not.toBeInTheDocument();
+  });
+
+  it('avisa Instagram y TikTok en el mismo panel y deja responder', async () => {
+    conSesion();
+    let body: unknown = null;
+    mockApi({
+      'GET /cuenta/me': lista(cuenta()),
+      'GET /cuenta/ventanas': [
+        { id: 'ig1', canal: 'instagram', nombre: 'Ana', texto: 'Quedan 30 min para que se cierre la ventana de 24 horas de Instagram.', puedeResponder: true, ultimo: '¿Tenés turno mañana?' },
+        { id: 'tt1', canal: 'tiktok', nombre: 'Leo', texto: 'TikTok: van 9 de 10 respuestas en esta charla.', puedeResponder: true },
+      ],
+      'GET /cuenta/ventanas/ig1': {
+        id: 'ig1',
+        canal: 'instagram',
+        nombre: 'Ana',
+        aviso: 'Quedan 30 min para que se cierre la ventana de 24 horas de Instagram.',
+        puedeResponder: true,
+        mensajes: [
+          { rol: 'user', texto: '¿Tenés turno mañana?', at: '2026-11-21T18:00:00.000Z' },
+          { rol: 'assistant', texto: 'Sí, a las 17:30.', at: '2026-11-21T18:01:00.000Z' },
+        ],
+      },
+      'POST /cuenta/ventanas/ig1/responder': (init: RequestInit) => {
+        body = JSON.parse(String(init.body));
+        return { body: { ok: true } };
+      },
+    });
+    renderApp('/cuenta/conversaciones');
+    expect(await screen.findByText(/ventana de 24 horas de Instagram/)).toBeInTheDocument();
+    expect(screen.getByText(/9 de 10 respuestas/)).toBeInTheDocument();
+    expect(screen.queryByLabelText('Respuesta')).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Abrir chat de Ana' }));
+    expect(await screen.findByRole('button', { name: 'Pausar la IA' })).toBeInTheDocument();
+    expect(screen.getByText('Sí, a las 17:30.')).toBeInTheDocument();
+    expect(screen.getAllByText('¿Tenés turno mañana?').length).toBeGreaterThan(1);
+    await userEvent.type(screen.getByLabelText('Respuesta'), 'Te espero');
+    await userEvent.click(screen.getByRole('button', { name: 'Enviar' }));
+    await waitFor(() => expect(body).toEqual({ texto: 'Te espero' }));
+  });
+
+  it('un chat largo de varios días se lee entero y guarda cuándo derivar', async () => {
+    conSesion();
+    const largo = 'Quiero reservar para un evento de 40 personas. '.repeat(12);
+    const mensajes = [
+      { rol: 'user' as const, texto: 'Hola del miércoles', at: '2026-11-18T15:00:00.000Z' },
+      { rol: 'assistant' as const, texto: largo, at: '2026-11-19T18:30:00.000Z' },
+      { rol: 'user' as const, texto: 'Sigo el viernes', at: '2026-11-21T12:00:00.000Z' },
+      { rol: 'assistant' as const, texto: 'Dale', at: '2026-11-21T12:05:00.000Z' },
+    ];
+    let perfil: Record<string, unknown> | null = null;
+    const c = lista(
+      cuenta({
+        negocio: {
+          ...cuenta().negocio,
+          perfil: {
+            descripcion: 'Peluquería de barrio con 10 años.',
+            productos: '',
+            horarios: '',
+            ubicacion: '',
+            pagosEnvios: '',
+            tono: 'cercano',
+            derivar: '',
+            preguntas: [],
+          },
+        },
+      }),
+    );
+    mockApi({
+      'GET /cuenta/me': c,
+      'GET /cuenta/ventanas': [{ id: 'largo', canal: 'whatsapp', nombre: 'Marta con un nombre bastante largo', texto: '', puedeResponder: true, ultimo: 'Sigo el viernes', at: '2026-11-21T12:05:00.000Z' }],
+      'GET /cuenta/ventanas/largo': { id: 'largo', canal: 'whatsapp', nombre: 'Marta con un nombre bastante largo', aviso: null, puedeResponder: true, pausada: false, mensajes },
+      'PUT /cuenta/perfil': (init: RequestInit) => {
+        perfil = JSON.parse(String(init.body));
+        return { body: c };
+      },
+    });
+    renderApp('/cuenta/conversaciones');
+    await userEvent.click(await screen.findByRole('button', { name: 'Abrir chat de Marta con un nombre bastante largo' }));
+    const chat = await screen.findByLabelText('Chat');
+    expect(chat.textContent).toContain(largo.trim());
+    expect(chat.textContent?.match(/Quiero reservar para un evento de 40 personas\./g)).toHaveLength(12);
+    for (const dia of gruposPorDia(mensajes).map((g) => g.dia).filter(Boolean)) expect(screen.getByText(dia)).toBeInTheDocument();
+    expect(screen.getByText('Hola del miércoles')).toBeInTheDocument();
+    expect(screen.getAllByText('Sigo el viernes').length).toBeGreaterThan(1);
+    expect(screen.getByRole('button', { name: 'Pausar la IA' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Atender yo' })).not.toBeInTheDocument();
+    const casos = screen.getByRole('textbox', { name: /Cuándo derivar automáticamente/ });
+    await userEvent.type(casos, 'Reclamos y facturas de eventos');
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar casos' }));
+    await waitFor(() => expect(perfil).toMatchObject({ derivar: 'Reclamos y facturas de eventos', descripcion: 'Peluquería de barrio con 10 años.' }));
+  });
+
+  it('busca por número, abre el uuid y muestra el enlace para reportar un fallo', async () => {
+    conSesion();
+    const codigo = '11111111-1111-4111-8111-111111111111';
+    const base = lista(cuenta());
+    mockApi({
+      'GET /cuenta/me': base,
+      'GET /cuenta/ventanas': [
+        { id: 'a', codigo, canal: 'whatsapp', nombre: 'Ana', numero: '+5491111110001', texto: '', puedeResponder: true, ultimo: 'Hola Ana', at: '2026-11-21T15:00:00.000Z' },
+        { id: 'b', codigo: '22222222-2222-4222-8222-222222222222', canal: 'whatsapp', nombre: 'Sol', numero: '+5491111110002', texto: '', puedeResponder: false, ultimo: 'Hola Sol', at: '2026-11-19T15:00:00.000Z' },
+      ],
+      'GET /cuenta/ventanas?q=0002': [
+        { id: 'b', codigo: '22222222-2222-4222-8222-222222222222', canal: 'whatsapp', nombre: 'Sol', numero: '+5491111110002', texto: '', puedeResponder: false, ultimo: 'Hola Sol', at: '2026-11-19T15:00:00.000Z' },
+      ],
+      [`GET /cuenta/ventanas/${codigo}`]: () => ({ status: 500, body: { error: 'No se pudo leer la charla' } }),
+    });
+    const vista = renderApp('/cuenta/conversaciones');
+    expect(await screen.findByRole('button', { name: 'Abrir chat de Ana +5491111110001' })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Con número' }));
+    expect(screen.getByRole('button', { name: 'Abrir chat de Sol +5491111110002' })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'WhatsApp' }));
+    expect(screen.getAllByRole('button', { name: /Abrir chat de/ })).toHaveLength(2);
+    await userEvent.type(screen.getByLabelText('Buscar charla'), '0002');
+    await waitFor(() => expect(screen.queryByRole('button', { name: /Ana/ })).not.toBeInTheDocument());
+    expect(screen.getByRole('button', { name: 'Abrir chat de Sol +5491111110002' })).toBeInTheDocument();
+    vista.unmount();
+    renderApp(`/cuenta/conversaciones/${codigo}`);
+    expect(await screen.findByText('Hubo un fallo en esta charla.')).toBeInTheDocument();
+    expect(screen.getByText(codigo)).toBeInTheDocument();
+    const link = screen.getByRole('link', { name: new RegExp(`/cuenta/conversaciones/${codigo}$`) });
+    expect(link).toHaveAttribute('href', expect.stringContaining(`/cuenta/conversaciones/${codigo}`));
+    expect(screen.getByRole('button', { name: 'Copiar enlace' })).toBeInTheDocument();
+  });
+
+  it('la baja corta el débito y avisa que no hay reembolso', async () => {
+    conSesion();
+    const confirmar = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const c = lista(cuenta());
+    mockApi({
+      'GET /cuenta/me': c,
+      'POST /cuenta/baja': {
+        ...c,
+        suscripcion: { ...c.suscripcion!, canceladaEn: '2026-11-21T18:00:00.000Z' },
+      },
+    });
+    renderApp('/cuenta/ajustes');
+    await userEvent.click(await screen.findByRole('button', { name: 'Dar de baja' }));
+    expect(String(confirmar.mock.calls[0][0])).toMatch(/No devolvemos/);
+    expect(await screen.findByText(/no se vuelve a cobrar/)).toBeInTheDocument();
   });
 });

@@ -1,10 +1,10 @@
 import type { Cuenta, Ficha, Metricas, Plan, Ticket } from '../types';
 
 export const PLANES: Plan[] = [
-  { id: 'mensajes', nombre: 'Mensajes', precioTransferencia: 40000, precioMercadoPago: 42000, topeDia: 100, topeSemana: 500, topeMes: 2000, modulos: ['faq', 'handoff'], maxCanales: 1, modeloCapaz: false },
-  { id: 'turnos', nombre: 'Turnos', precioTransferencia: 80000, precioMercadoPago: 84000, topeDia: 200, topeSemana: 1000, topeMes: 4000, modulos: ['faq', 'handoff', 'turnos'], maxCanales: 2, modeloCapaz: false },
-  { id: 'completo', nombre: 'Completo', precioTransferencia: 110000, precioMercadoPago: 115000, topeDia: 400, topeSemana: 2000, topeMes: 8000, modulos: ['faq', 'handoff', 'turnos', 'recordatorios'], maxCanales: 3, modeloCapaz: true },
-  { id: 'personalizado', nombre: 'Personalizado', precioTransferencia: 0, precioMercadoPago: 0, topeDia: 1000, topeSemana: 5000, topeMes: 20000, modulos: ['faq', 'handoff', 'turnos', 'recordatorios'], maxCanales: 5, modeloCapaz: true },
+  { id: 'mensajes', nombre: 'Mensajes', precioTransferencia: 40000, precioMercadoPago: 42000, precioMensajeExtra: 45, topeDia: 100, topeSemana: 500, topeMes: 2000, modulos: ['faq', 'handoff'], maxCanales: 1, modeloCapaz: false },
+  { id: 'turnos', nombre: 'Turnos', precioTransferencia: 80000, precioMercadoPago: 84000, precioMensajeExtra: 40, topeDia: 200, topeSemana: 1000, topeMes: 4000, modulos: ['faq', 'handoff', 'turnos'], maxCanales: 2, modeloCapaz: false },
+  { id: 'completo', nombre: 'Completo', precioTransferencia: 110000, precioMercadoPago: 115000, precioMensajeExtra: 30, topeDia: 400, topeSemana: 2000, topeMes: 8000, modulos: ['faq', 'handoff', 'turnos', 'recordatorios'], maxCanales: 3, modeloCapaz: true },
+  { id: 'personalizado', nombre: 'Personalizado', precioTransferencia: 0, precioMercadoPago: 0, precioMensajeExtra: 25, topeDia: 1000, topeSemana: 5000, topeMes: 20000, modulos: ['faq', 'handoff', 'turnos', 'recordatorios'], maxCanales: 5, modeloCapaz: true },
 ];
 
 export const FICHA: Ficha = {
@@ -68,7 +68,6 @@ export function cuenta(overrides: Partial<Cuenta> = {}, plan: Plan = PLANES[1]):
     web: { activa: false, clave: null, origenes: [], bienvenida: null, color: null, endpoint: null, script: null },
     planElegido: true,
     suscripcion: { medio: 'mercadopago', estadoPago: 'al_dia', vencimiento: '2026-12-14T15:00:00.000Z', importe: plan.precioMercadoPago, mpInitPoint: null },
-    transferencia: null,
     referido: null,
     referidoEditable: true,
     onboarding: { paso: 0, completado: null, requisitos: { pago: true, canal: false, prompt: false } },

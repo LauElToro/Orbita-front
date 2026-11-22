@@ -1,5 +1,5 @@
 export type PlanId = 'mensajes' | 'turnos' | 'completo' | 'personalizado';
-export type MedioPago = 'mercadopago' | 'transferencia';
+export type MedioPago = 'mercadopago';
 export type EstadoPago = 'al_dia' | 'pendiente' | 'impago';
 export type EstadoBot = 'activo' | 'pausado';
 export type CanalTipo = 'whatsapp' | 'instagram' | 'tiktok';
@@ -10,6 +10,7 @@ export interface Plan {
   nombre: string;
   precioTransferencia: number;
   precioMercadoPago: number;
+  precioMensajeExtra?: number;
   topeDia: number;
   topeSemana: number;
   topeMes: number;
@@ -26,6 +27,9 @@ export interface Canal {
   token?: string;
   conectado?: boolean;
   tokenMask?: string | null;
+  verificacion?: VerificacionWhatsapp | null;
+  verificacionDetalle?: string | null;
+  displayPhone?: string | null;
 }
 
 export interface Mensajes {
@@ -35,7 +39,8 @@ export interface Mensajes {
   recordatorio: string;
 }
 
-export type PausaMotivo = 'manual' | 'impago' | 'onboarding' | null;
+export type PausaMotivo = 'manual' | 'impago' | 'onboarding' | 'baja' | null;
+export type VerificacionWhatsapp = 'pendiente' | 'en_revision' | 'verificado' | 'rechazado';
 export type DocumentoLegal = 'terminos' | 'privacidad';
 export type TicketTipo = 'ia_personalizada' | 'arrepentimiento';
 
@@ -128,10 +133,20 @@ export interface PaginaPublica {
   uso: { mes: number; tope: number; reinicia: string };
   diasGracia: number;
   mercadopago: { initPoint: string | null; requiereEmail: boolean; habilitado: boolean } | null;
-  transferencia: { alias: string; importe: number; concepto: string } | null;
 }
 
 export type Tono = 'cercano' | 'formal' | 'divertido';
+
+export interface ItemCatalogo {
+  nombre: string;
+  detalle: string;
+  categoria: string;
+  imagen: string;
+  precio: number;
+  precioEfectivo?: number;
+  stock: number | null;
+  medios: string[];
+}
 
 export interface Perfil {
   descripcion: string;
@@ -143,6 +158,7 @@ export interface Perfil {
   derivar: string;
   preguntas: { pregunta: string; respuesta: string }[];
   turnos?: { servicios: string; horarios: string; duracionMin: number; anticipacionHoras: number };
+  catalogo?: ItemCatalogo[];
 }
 
 export interface IntegracionWeb {
@@ -191,8 +207,12 @@ export interface Cuenta {
     importe: number;
     mpInitPoint: string | null;
     debitoActivo?: boolean;
+    canceladaEn?: string | null;
   } | null;
-  transferencia: { alias: string; importe: number; concepto: string } | null;
+  whatsapp?: { listo: boolean; appId: string; configId: string; version: string };
+  redes?: { facebook: { listo: boolean }; instagram: { listo: boolean }; tiktok: { listo: boolean } };
+  calendario?: { conectado: boolean; email: string | null };
+  extras?: { cantidad: number; pendiente: number; precio: number; periodo: string } | null;
   /** Link de referido con el que quedó vinculada la cuenta. */
   referido: { codigo: string } | null;
   /** Se puede cargar uno a mano: no tiene referido y todavía no pagó. */
@@ -204,6 +224,7 @@ export interface Simulacion {
   texto: string;
   handoff: boolean;
   acciones: string[];
+  imagen?: string;
 }
 
 export type FuncionDemo = 'stock' | 'horarios' | 'turnos' | 'pedidos' | 'derivar';

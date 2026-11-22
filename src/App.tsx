@@ -3,9 +3,10 @@ import { Navigate, Route, Routes, useSearchParams } from 'react-router-dom';
 import { referido } from './api';
 import { Layout } from './components/Layout';
 import { RequireAuth } from './components/RequireAuth';
-import { GoogleVuelta, Ingresar, Olvide, Registro, Restablecer } from './cuenta/Acceso';
+import { CalendarioVuelta, GoogleVuelta, Ingresar, Olvide, RedesVuelta, Registro, Restablecer } from './cuenta/Acceso';
 import { Demo } from './cuenta/Demo';
 import { Agenda, Ajustes, Conexion, CuentaLayout, Inicio, MiIA, PlanYPagos, Probar, Referidos } from './cuenta/Panel';
+import { Conversaciones } from './cuenta/Ventanas';
 import { Arrepentimiento } from './legal/Arrepentimiento';
 import { Privacidad } from './legal/Privacidad';
 import { Terminos } from './legal/Terminos';
@@ -55,6 +56,8 @@ export function App() {
       <Route path="/ingresar" element={<Ingresar />} />
       <Route path="/olvide" element={<Olvide />} />
       <Route path="/google/vuelta" element={<GoogleVuelta />} />
+      <Route path="/calendario/vuelta" element={<CalendarioVuelta />} />
+      <Route path="/redes/vuelta" element={<RedesVuelta />} />
       <Route path="/restablecer/:token" element={<Restablecer />} />
       <Route path="/cuenta" element={<CuentaLayout />}>
         <Route index element={<Inicio />} />
@@ -62,6 +65,7 @@ export function App() {
         <Route path="ia" element={<MiIA />} />
         <Route path="probar" element={<Probar />} />
         <Route path="conexion" element={<Conexion />} />
+        <Route path="conversaciones/:codigo?" element={<Conversaciones />} />
         <Route path="agenda" element={<Agenda />} />
         <Route path="plan" element={<PlanYPagos />} />
         <Route path="referidos" element={<Referidos />} />

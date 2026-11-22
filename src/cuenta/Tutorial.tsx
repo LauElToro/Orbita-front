@@ -49,7 +49,7 @@ const PASOS: Record<PasoId, Paso> = {
   canales: {
     id: 'canales',
     titulo: 'Conectar tus canales',
-    intro: 'Tu IA atiende directo en tu WhatsApp, Instagram o TikTok. Cargá el ID de cada cuenta y su token; abajo te contamos dónde encontrarlos.',
+    intro: 'Tu IA atiende directo en tu WhatsApp, Instagram o TikTok. Apretá Conectar: se abre la autorización y la cuenta queda enlazada.',
   },
   web: {
     id: 'web',
@@ -95,7 +95,7 @@ export function pasosDe(cuenta: Cuenta): Paso[] {
 const REQUISITOS: { key: keyof Requisitos; label: string; paso: PasoId }[] = [
   { key: 'pago', label: 'Pago del plan acreditado', paso: 'bienvenida' },
   { key: 'prompt', label: 'Información de tu negocio', paso: 'negocio' },
-  { key: 'canal', label: 'Un canal conectado con su token o la integración web activa', paso: 'canales' },
+  { key: 'canal', label: 'Un canal conectado o la integración web activa', paso: 'canales' },
 ];
 
 export function Tutorial({ cuenta: cuentaActual }: { cuenta: Cuenta }) {
@@ -161,11 +161,11 @@ export function Tutorial({ cuenta: cuentaActual }: { cuenta: Cuenta }) {
     estilo: <PerfilForm cuenta={cuenta} secciones={['estilo']} boton="Guardar y seguir" onGuardado={guardarYSeguir} />,
     canales: (
       <>
-        <CanalesForm cuenta={cuenta} boton="Guardar y seguir" onGuardado={guardarYSeguir} />
+        <CanalesForm cuenta={cuenta} />
         <button type="button" className="link" onClick={siguiente}>
           No uso WhatsApp, Instagram ni TikTok: seguir con la web
         </button>
-        <h3>Dónde encontrar cada dato</h3>
+        <h3>Cómo se conecta cada red</h3>
         <GuiaCanales />
       </>
     ),

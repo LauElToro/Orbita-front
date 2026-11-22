@@ -13,4 +13,4 @@ export const EMPRESA = {
 };
 
 /** Debe coincidir con LEGAL en Backend/src/legal/legal.ts. */
-export const VERSION_LEGAL = { terminos: '2026-11-14', privacidad: '2026-11-14' };
+export const VERSION_LEGAL = { terminos: '2026-11-21', privacidad: '2026-11-14' };

@@ -48,7 +48,7 @@ export function CuentaLayout() {
 function gruposDe(c: Cuenta | undefined): GrupoNav[] {
   const listo = Boolean(c?.onboarding.completado);
   const explorar = Boolean(c && !c.onboarding.completado && !c.onboarding.requisitos.pago);
-  const ver = listo || explorar;
+  const ver = listo || explorar || Boolean(c?.onboarding.requisitos.pago);
   const items = (lista: (ItemNav | false)[]) => lista.filter((i): i is ItemNav => Boolean(i));
   return [
     { items: [{ to: '/cuenta', label: 'Inicio', icono: 'inicio', end: true }] },
@@ -61,7 +61,17 @@ function gruposDe(c: Cuenta | undefined): GrupoNav[] {
         ver && !!c?.negocio.modulos.includes('turnos') && { to: '/cuenta/agenda', label: 'Agenda', icono: 'agenda', bloqueado: explorar },
       ]),
     },
-    ...(ver ? [{ titulo: 'Canales', items: [{ to: '/cuenta/conexion', label: 'Conexión', icono: 'conexion' as const, bloqueado: explorar }] }] : []),
+    ...(ver
+      ? [
+          {
+            titulo: 'Canales',
+            items: [
+              { to: '/cuenta/conexion', label: 'Conexión', icono: 'conexion' as const, bloqueado: explorar },
+              { to: '/cuenta/conversaciones', label: 'Conversaciones', icono: 'reloj' as const, bloqueado: explorar },
+            ],
+          },
+        ]
+      : []),
     {
       titulo: 'Cuenta',
       items: [
@@ -423,7 +433,7 @@ function ProximosTurnos({ limite }: { limite?: number }) {
   );
 }
 
-function ZonaExplorar({ cuenta, children }: { cuenta: Cuenta; children: ReactNode }) {
+export function ZonaExplorar({ cuenta, children }: { cuenta: Cuenta; children: ReactNode }) {
   if (cuenta.onboarding.requisitos.pago || cuenta.onboarding.completado) return <>{children}</>;
   return (
     <div className="explorar">
@@ -453,9 +463,29 @@ function ZonaExplorar({ cuenta, children }: { cuenta: Cuenta; children: ReactNod
 
 export function Agenda() {
   const cuenta = useCuentaActual();
+  const conectar = useMutation({
+    mutationFn: () => api<{ url: string }>('/cuenta/calendario/iniciar', { method: 'POST' }),
+    onSuccess: ({ url }) => location.assign(url),
+  });
+  const cal = cuenta.calendario;
   return (
     <ZonaExplorar cuenta={cuenta}>
-      <PageHead title="Agenda" sub="Los turnos que agendó tu IA, de la última semana en adelante." />
+      <PageHead title="Agenda" sub="Los turnos que agendó tu IA. Si conectás un calendario, se copian solos." />
+      <Section title="Calendario">
+        <p className="small muted">
+          Crear, mover o cancelar un turno actualiza el calendario. El recordatorio sigue saliendo de Orbita.
+        </p>
+        {cal?.conectado ? (
+          <p>
+            <span className="badge badge-ok">Conectado</span> {cal.email || 'Google Calendar'}
+          </p>
+        ) : (
+          <button type="button" onClick={() => conectar.mutate()} disabled={conectar.isPending}>
+            {conectar.isPending ? 'Abriendo Google...' : 'Conectar Google Calendar'}
+          </button>
+        )}
+        <ErrorMsg error={conectar.error} />
+      </Section>
       <ProximosTurnos />
     </ZonaExplorar>
   );
@@ -530,7 +560,7 @@ export function Conexion() {
       <Section title="Canales">
         <CanalesForm cuenta={cuenta} />
       </Section>
-      <Section title="Dónde encontrar cada dato">
+      <Section title="Cómo se conecta cada red">
         <GuiaCanales />
       </Section>
       <Section title="Integración web">
@@ -539,6 +569,68 @@ export function Conexion() {
         <GuiaWeb />
       </Section>
     </ZonaExplorar>
+  );
+}
+
+function Extras({ cuenta }: { cuenta: Cuenta }) {
+  const extra = cuenta.extras;
+  const pagar = useMutation({
+    mutationFn: () => api<{ initPoint: string }>('/cuenta/extras', { method: 'POST' }),
+    onSuccess: ({ initPoint }) => location.assign(initPoint),
+  });
+  if (!extra || extra.cantidad <= 0) return null;
+  return (
+    <div className="aviso-ventana">
+      <p>
+        Este período: <strong>{extra.cantidad}</strong> {extra.cantidad === 1 ? 'respuesta extra' : 'respuestas extra'} a{' '}
+        {pesos(extra.precio)} cada una.
+      </p>
+      {extra.pendiente > 0 ? (
+        <>
+          <p className="small">Cargo aparte del abono: {pesos(extra.pendiente)}.</p>
+          <button type="button" onClick={() => pagar.mutate()} disabled={pagar.isPending}>
+            {pagar.isPending ? 'Abriendo Mercado Pago...' : 'Pagar mensajes extra'}
+          </button>
+          <ErrorMsg error={pagar.error} />
+        </>
+      ) : (
+        <p className="small muted">Ese cargo ya está pago.</p>
+      )}
+    </div>
+  );
+}
+
+export function BotonBaja({ cuenta }: { cuenta: Cuenta }) {
+  const baja = useAccionCuenta();
+  const sub = cuenta.suscripcion;
+  if (!sub) return null;
+  if (sub.canceladaEn) {
+    return (
+      <p className="small">
+        Diste de baja el {fecha(sub.canceladaEn)}. El plan sigue hasta el {fecha(sub.vencimiento)}. No hay reembolso y no se vuelve a cobrar.
+      </p>
+    );
+  }
+  return (
+    <div>
+      <button
+        type="button"
+        className="secondary"
+        disabled={baja.isPending}
+        onClick={() => {
+          if (
+            confirm(
+              'La baja es inmediata. No devolvemos el dinero del período ya pago. El plan sigue hasta el vencimiento y después no se vuelve a cobrar. ¿Confirmás?',
+            )
+          ) {
+            baja.mutate({ path: 'baja' });
+          }
+        }}
+      >
+        {baja.isPending ? 'Dando de baja...' : 'Dar de baja'}
+      </button>
+      <ErrorMsg error={baja.error} />
+    </div>
   );
 }
 
@@ -571,10 +663,11 @@ export function PlanYPagos() {
         <PagoBloque cuenta={cuenta} />
         {cuenta.suscripcion?.estadoPago === 'al_dia' && (
           <p className="small muted">
-            Próximo vencimiento: {fecha(cuenta.suscripcion.vencimiento)} · {pesos(cuenta.suscripcion.importe)} por{' '}
-            {MEDIO[cuenta.suscripcion.medio]}
+            Próximo vencimiento: {fecha(cuenta.suscripcion.vencimiento)} · {pesos(cuenta.suscripcion.importe)} por Mercado Pago
           </p>
         )}
+        <Extras cuenta={cuenta} />
+        <BotonBaja cuenta={cuenta} />
       </Section>
       <ReferidoPlan cuenta={cuenta} />
       {cuenta.planElegido && <Section title="Cambiar de plan">
@@ -715,9 +808,10 @@ export function Ajustes() {
           </Link>
         </p>
         <p className="small muted">
-          Podés pausar tu IA desde Inicio en cualquier momento. Para dar de baja el servicio escribinos; si contrataste hace menos de 10 días podés usar el{' '}
+          Podés pausar tu IA desde Inicio en cualquier momento. Si contrataste hace menos de 10 días podés usar el{' '}
           <Link to="/arrepentimiento">botón de arrepentimiento</Link>.
         </p>
+        <BotonBaja cuenta={cuenta} />
       </Section>
     </>
   );

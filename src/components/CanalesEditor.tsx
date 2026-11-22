@@ -6,7 +6,7 @@ const TIPOS: { value: CanalTipo; label: string; id: string; ejemplo: string }[] 
   { value: 'tiktok', label: 'TikTok', id: 'ID de la cuenta Business (business_id)', ejemplo: '-000aBcD...' },
 ];
 
-export const canalVacio = (): Canal => ({ tipo: 'whatsapp', endpointId: '', etiqueta: '', token: '' });
+export const canalVacio = (tipo: CanalTipo = 'whatsapp'): Canal => ({ tipo, endpointId: '', etiqueta: '', token: '' });
 
 /** El backend conserva el token guardado cuando no viene uno nuevo, y rechaza un token vacío. */
 export const canalesParaEnviar = (canales: Canal[]) =>
@@ -16,19 +16,21 @@ interface Props {
   value: Canal[];
   max: number;
   onChange: (canales: Canal[]) => void;
+  permitidos?: CanalTipo[];
 }
 
-export function CanalesEditor({ value, max, onChange }: Props) {
+export function CanalesEditor({ value, max, onChange, permitidos }: Props) {
+  const tipos = permitidos ? TIPOS.filter((t) => permitidos.includes(t.value)) : TIPOS;
   const set = (i: number, patch: Partial<Canal>) => onChange(value.map((c, j) => (j === i ? { ...c, ...patch } : c)));
   return (
     <div className="canales">
       {value.map((c, i) => {
-        const tipo = TIPOS.find((t) => t.value === c.tipo) ?? TIPOS[0];
+        const tipo = tipos.find((t) => t.value === c.tipo) ?? tipos[0];
         return (
           <div className="canal-card" key={i}>
             <div className="canal-cabecera">
               <select aria-label={`Tipo canal ${i + 1}`} value={c.tipo} onChange={(e) => set(i, { tipo: e.target.value as CanalTipo })}>
-                {TIPOS.map((t) => (
+                {tipos.map((t) => (
                   <option key={t.value} value={t.value}>
                     {t.label}
                   </option>
@@ -76,7 +78,7 @@ export function CanalesEditor({ value, max, onChange }: Props) {
           </div>
         );
       })}
-      <button type="button" className="secondary" onClick={() => onChange([...value, canalVacio()])} disabled={value.length >= max}>
+      <button type="button" className="secondary" onClick={() => onChange([...value, canalVacio(tipos[0]?.value ?? 'instagram')])} disabled={value.length >= max}>
         Agregar canal ({value.length}/{max})
       </button>
     </div>
