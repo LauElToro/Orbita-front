@@ -101,7 +101,7 @@ button.link { background: none; border: none; color: var(--primary); padding: 0.
 .button-lg, button.button-lg { padding: 0.75rem 1.4rem; font-size: 1.05rem; border-radius: 10px; }
 .button-ghost { background: transparent; border-color: rgba(255, 255, 255, 0.4); color: #fff; }
 .button-ghost-dark { background: transparent; color: var(--primary); }
-button:not(.secondary):not(.link):not(.chip):not(.icon-btn):not(.ghost-btn):not(.funcion):not(.inbox-item):not([role='radio']):not(.pres button):not(:disabled):hover, .button:not(.secondary):hover { background: var(--primary-dark); border-color: var(--primary-dark); }
+button:not(.secondary):not(.link):not(.chip):not(.icon-btn):not(.ghost-btn):not(.funcion):not(.inbox-item):not([role='radio']):not(.pres button):not(.checkout-opcion):not(.checkout-cambiar-btn):not(:disabled):hover, .button:not(.secondary):hover { background: var(--primary-dark); border-color: var(--primary-dark); }
 .button-ghost:hover { background: rgba(255, 255, 255, 0.1) !important; border-color: #fff !important; }
 .button-ghost-dark:hover { color: #fff; }
 .centrado { text-align: center; }
@@ -296,9 +296,20 @@ button:not(.secondary):not(.link):not(.chip):not(.icon-btn):not(.ghost-btn):not(
 .checkout-plan-nombre { flex: 1; min-width: 0; }
 .checkout-plan-nombre h2 { margin: 0; font-size: 1.05rem; color: #12141c; }
 .checkout-plan-nombre p { margin: 0.15rem 0 0; color: #5c6478; font-size: 0.88rem; line-height: 1.35; }
-.checkout-cambiar { position: relative; flex-direction: row; align-items: center; margin: 0; color: #5b4cf0; font-weight: 700; font-size: 0.9rem; white-space: nowrap; cursor: pointer; }
-.checkout-cambiar::after { content: '▾'; margin-left: 0.2rem; font-size: 0.75rem; }
-.checkout-cambiar select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: 0; padding: 0; }
+.checkout-plan-elige { position: relative; }
+.checkout-cambiar-btn { margin: 0; padding: 0.15rem 0.1rem; background: none; border: 0; color: #5b4cf0; font-weight: 700; font-size: 0.9rem; white-space: nowrap; }
+.checkout-cambiar-btn::after { content: ' ▾'; font-size: 0.75rem; }
+.checkout-cambiar-btn:hover, .checkout-cambiar-btn[aria-expanded='true'] { color: #4234c9; }
+.checkout-menu { position: absolute; z-index: 20; left: 0; right: 0; top: calc(100% + 0.45rem); margin: 0; padding: 0.4rem; list-style: none; background: #fff; border: 1px solid #e4e7ee; border-radius: 16px; box-shadow: 0 18px 50px rgba(18, 20, 40, 0.14); }
+.checkout-menu li { margin: 0; }
+.checkout-opcion { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; margin: 0; padding: 0.75rem 0.8rem; background: transparent; color: #171b2c; border: 0; border-radius: 12px; text-align: left; font-weight: 500; }
+.checkout-opcion:hover, .checkout-opcion[aria-selected='true'] { background: #f4f2ff; color: #171b2c; }
+.checkout-opcion-texto { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.checkout-opcion-texto strong { display: flex; align-items: center; gap: 0.4rem; font-size: 0.98rem; }
+.checkout-opcion-texto em { font-style: normal; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: #5b4cf0; background: #ece9ff; border-radius: 999px; padding: 0.1rem 0.4rem; }
+.checkout-opcion-texto small { color: #5c6478; font-size: 0.8rem; line-height: 1.35; }
+.checkout-opcion-precio { flex: none; font-weight: 800; font-size: 0.95rem; letter-spacing: -0.02em; white-space: nowrap; }
+.checkout-opcion-precio small { font-weight: 600; color: #6b7385; }
 .checkout-precio { margin: 1rem 0 0.15rem; font-size: 2.15rem; font-weight: 800; letter-spacing: -0.03em; color: #12141c; line-height: 1; }
 .checkout-precio small { margin-left: 0.15rem; font-size: 1rem; font-weight: 650; color: #6b7385; }
 .checkout .oferta { margin-top: 0.45rem; }

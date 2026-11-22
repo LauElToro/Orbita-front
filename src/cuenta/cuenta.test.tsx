@@ -17,7 +17,15 @@ const conSesion = () => sesionCliente.set('jwt-cliente');
 const lista = (c: Cuenta) => ({ ...c, onboarding: { ...c.onboarding, completado: '2026-11-14T15:00:00.000Z', requisitos: { pago: true, canal: true, prompt: true } }, negocio: { ...c.negocio, estado: 'activo' as const, pausaMotivo: null } });
 
 describe('registro y acceso del cliente', () => {
-  it('registra con plan preseleccionado, exige aceptar los documentos y muestra el pago', async () => {
+  it('un link con plan abre el checkout y no otro formulario', async () => {
+    mockApi({ 'GET /publico/planes': PUBLICOS });
+    renderApp('/registro?plan=completo&ref=juan-socio');
+    expect(await screen.findByRole('heading', { name: 'Plan Completo' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Activá tu IA' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Crear mi cuenta' })).not.toBeInTheDocument();
+  });
+
+  it('registra, exige aceptar los documentos y muestra el pago', async () => {
     let body: Record<string, unknown> = {};
     mockApi({
       'GET /publico/planes': PUBLICOS,
@@ -30,10 +38,8 @@ describe('registro y acceso del cliente', () => {
         onboarding: { paso: 0, completado: null, requisitos: { pago: false, canal: false, prompt: false } },
       }),
     });
-    renderApp('/registro?plan=completo');
-    expect(await screen.findByRole('option', { name: /Completo/ })).toBeInTheDocument();
-    expect(screen.getByLabelText('Plan')).toHaveValue('completo');
-    await userEvent.type(screen.getByLabelText('Nombre del negocio'), 'Peluquería Luna');
+    renderApp('/registro');
+    await userEvent.type(await screen.findByLabelText('Nombre del negocio'), 'Peluquería Luna');
     await userEvent.type(screen.getByLabelText('Rubro'), 'Estética');
     await userEvent.type(screen.getByLabelText('Tu nombre'), 'Sofía Pérez');
     await userEvent.type(screen.getByLabelText('Email'), 'sofia@luna.com');
@@ -52,7 +58,8 @@ describe('registro y acceso del cliente', () => {
     await userEvent.click(screen.getByRole('link', { name: 'Mi IA' }));
     expect(await screen.findByText(/Esta parte se habilita cuando se acredita el pago/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Guardar cambios' })).toBeDisabled();
-    expect(body).toMatchObject({ planId: 'completo', medio: 'mercadopago', aceptaTerminos: true, aceptaPrivacidad: true });
+    expect(body).toMatchObject({ medio: 'mercadopago', aceptaTerminos: true, aceptaPrivacidad: true });
+    expect(body.planId).toBeUndefined();
     expect(sesionCliente.get()).toBe('jwt-nuevo');
   });
 
@@ -76,9 +83,7 @@ describe('registro y acceso del cliente', () => {
       },
     });
     renderApp('/registro');
-    await screen.findByRole('option', { name: /Completo/ });
-    expect(screen.getByLabelText('Plan')).toHaveValue('');
-    await userEvent.type(screen.getByLabelText('Nombre del negocio'), 'Peluquería Luna');
+    await userEvent.type(await screen.findByLabelText('Nombre del negocio'), 'Peluquería Luna');
     await userEvent.type(screen.getByLabelText('Rubro'), 'Estética');
     await userEvent.type(screen.getByLabelText('Tu nombre'), 'Sofía Pérez');
     await userEvent.type(screen.getByLabelText('Email'), 'sofia@luna.com');

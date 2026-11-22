@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { api, referido } from '../api';
 import { beneficiosDe, Oferta, OFERTA_LEYENDA } from '../components/Planes';
@@ -14,6 +14,95 @@ const RESUMEN: Record<string, string> = {
   turnos: 'Responde y agenda turnos sola',
   completo: 'Responde, agenda y manda recordatorios',
 };
+
+function SelectorPlan({
+  planes,
+  plan,
+  onElegir,
+}: {
+  planes: Plan[];
+  plan: Plan;
+  onElegir: (id: string) => void;
+}) {
+  const [abierto, setAbierto] = useState(false);
+  const caja = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!abierto) return;
+    const afuera = (e: MouseEvent) => {
+      if (!caja.current?.contains(e.target as Node)) setAbierto(false);
+    };
+    const tecla = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setAbierto(false);
+    };
+    document.addEventListener('mousedown', afuera);
+    document.addEventListener('keydown', tecla);
+    return () => {
+      document.removeEventListener('mousedown', afuera);
+      document.removeEventListener('keydown', tecla);
+    };
+  }, [abierto]);
+
+  return (
+    <div className="checkout-plan-elige" ref={caja}>
+      <div className="checkout-planbox">
+        <span className="checkout-plan-icono" aria-hidden="true">
+          <Marca />
+        </span>
+        <div className="checkout-plan-nombre">
+          <h2>Plan {plan.nombre}</h2>
+          <p>{RESUMEN[plan.id] ?? beneficiosDe(plan)[0]}</p>
+        </div>
+        <button
+          type="button"
+          className="checkout-cambiar-btn"
+          aria-label="Cambiar plan"
+          aria-expanded={abierto}
+          aria-haspopup="listbox"
+          onClick={() => setAbierto((v) => !v)}
+        >
+          Cambiar
+        </button>
+      </div>
+      {abierto && (
+        <ul className="checkout-menu" role="listbox" aria-label="Planes">
+          {planes.map((p) => {
+            const elegido = p.id === plan.id;
+            return (
+              <li key={p.id}>
+                <button
+                  type="button"
+                  role="option"
+                  className="checkout-opcion"
+                  aria-selected={elegido}
+                  onClick={() => {
+                    onElegir(p.id);
+                    setAbierto(false);
+                  }}
+                >
+                  <span className="checkout-opcion-texto">
+                    <strong>
+                      {p.nombre}
+                      {elegido && <em>Elegido</em>}
+                    </strong>
+                    <small>
+                      {RESUMEN[p.id] ?? beneficiosDe(p)[0]} · {p.topeMes.toLocaleString('es-AR')} respuestas · {p.maxCanales}{' '}
+                      {p.maxCanales === 1 ? 'canal' : 'canales'}
+                    </small>
+                  </span>
+                  <span className="checkout-opcion-precio">
+                    {pesos(p.precioMercadoPago)}
+                    <small>/mes</small>
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 function Pagina({ children }: { children: ReactNode }) {
   return (
@@ -69,25 +158,7 @@ export function Checkout() {
           <p className="checkout-kicker">Tu plan</p>
           {plan ? (
             <>
-              <div className="checkout-planbox">
-                <span className="checkout-plan-icono" aria-hidden="true">
-                  <Marca />
-                </span>
-                <div className="checkout-plan-nombre">
-                  <h2>Plan {plan.nombre}</h2>
-                  <p>{RESUMEN[plan.id] ?? beneficiosDe(plan)[0]}</p>
-                </div>
-                <label className="checkout-cambiar">
-                  Cambiar
-                  <select aria-label="Plan" value={plan.id} onChange={(e) => elegir(e.target.value)}>
-                    {planes.data?.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.nombre} · {pesos(p.precioMercadoPago)}/mes
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
+              <SelectorPlan planes={planes.data ?? [plan]} plan={plan} onElegir={elegir} />
 
               <p className="checkout-precio">
                 {pesos(plan.precioMercadoPago)}

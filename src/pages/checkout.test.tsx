@@ -23,7 +23,13 @@ describe('checkout sin sesión', () => {
     renderApp('/checkout?plan=completo');
     expect(await screen.findByRole('heading', { name: 'Plan Completo' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Activá tu IA' })).toBeInTheDocument();
-    expect(screen.getByLabelText('Plan')).toHaveValue('completo');
+    await userEvent.click(screen.getByRole('button', { name: 'Cambiar plan' }));
+    expect(screen.getByRole('option', { name: /Turnos/ })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /Completo/ })).toHaveAttribute('aria-selected', 'true');
+    await userEvent.click(screen.getByRole('option', { name: /Turnos/ }));
+    expect(await screen.findByRole('heading', { name: 'Plan Turnos' })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Cambiar plan' }));
+    await userEvent.click(screen.getByRole('option', { name: /Completo/ }));
 
     await userEvent.type(screen.getByLabelText('Tu email'), 'ana@kiosco.com');
     const pagar = screen.getByRole('button', { name: 'Pagar y activar mi cuenta' });

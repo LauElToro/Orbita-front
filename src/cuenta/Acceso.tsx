@@ -1,12 +1,12 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react';
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { api, codigoDeReferido, referido, sesionCliente } from '../api';
 import { Oferta } from '../components/Planes';
 import { Logo } from '../components/Sitio';
 import { Check, ErrorMsg } from '../components/ui';
 import { pesos } from '../format';
-import type { Plan, PlanId } from '../types';
+import type { Plan } from '../types';
 import { CampoReferidoAcceso, useCodigoReferido } from './Referidos';
 
 const CHARLA: { de: 'cliente' | 'ia'; texto: string; hora: string }[] = [
@@ -174,17 +174,17 @@ export function Clave({
   );
 }
 
+const PLANES_CHECKOUT = new Set(['mensajes', 'turnos', 'completo']);
+
 export function Registro() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  const planes = useQuery({ queryKey: ['publico-planes'], queryFn: () => api<Plan[]>('/publico/planes') });
   const [form, setForm] = useState({
     negocio: '',
     rubro: '',
     nombre: '',
     email: '',
     password: '',
-    planId: (params.get('plan') as PlanId | null) ?? ('' as PlanId | ''),
     medio: 'mercadopago' as const,
   });
   const [terminos, setTerminos] = useState(false);
@@ -201,7 +201,6 @@ export function Registro() {
         method: 'POST',
         body: {
           ...form,
-          planId: form.planId || undefined,
           aceptaTerminos: terminos,
           aceptaPrivacidad: privacidad,
           ref: ref.codigo || undefined,
@@ -222,6 +221,14 @@ export function Registro() {
     registrar.mutate();
   };
 
+  const planPedido = params.get('plan');
+  if (planPedido && PLANES_CHECKOUT.has(planPedido)) {
+    const destino = new URLSearchParams({ plan: planPedido });
+    const refLink = params.get('ref');
+    if (refLink) destino.set('ref', refLink);
+    return <Navigate to={`/checkout?${destino}`} replace />;
+  }
+
   return (
     <Marco>
       <form className="auth-form" onSubmit={enviar}>
@@ -229,7 +236,10 @@ export function Registro() {
         <h1>
           Creá tu cuenta y <span>empezá a explorar</span>
         </h1>
-        <p className="auth-sub">Con Google usamos tu nombre y tu email. El negocio y el plan los completás después, y la cuenta queda sin plan.</p>
+        <p className="auth-sub">
+          Con Google usamos tu nombre y tu email. Esta cuenta queda sin plan: para contratar, elegilo en el{' '}
+          <Link to="/checkout?plan=turnos">checkout</Link>.
+        </p>
         {verRef ? (
           <CampoReferidoAcceso value={refTexto} onChange={setRefTexto} estado={ref.estado} />
         ) : (
@@ -242,19 +252,6 @@ export function Registro() {
         <ErrorMsg error={google.error} />
         <BotonGoogle pending={google.isPending} disabled={refBloquea} onClick={() => google.mutate()} />
         <p className="auth-separador">o con email</p>
-        <label>
-          Plan
-          <span className="auth-control">
-            <select aria-label="Plan" value={form.planId} onChange={(e) => set({ planId: e.target.value as PlanId | '' })}>
-              <option value="">Sin plan, lo elijo después</option>
-              {planes.data?.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.nombre} · {pesos(p.precioMercadoPago)}/mes · 20% OFF
-                </option>
-              ))}
-            </select>
-          </span>
-        </label>
         <label>
           Nombre del negocio
           <span className="auth-control">
